@@ -1,7 +1,11 @@
+import 'package:capstone_project/screens/create_account.dart';
 import 'package:flutter/material.dart';
 import 'package:capstone_project/screens/login.dart';
 import 'package:capstone_project/screens/sign_up.dart';
-
+import 'package:capstone_project/screens/mainpage.dart';
+import 'package:capstone_project/screens/risk_analysis.dart';
+import 'package:capstone_project/screens/risk_result.dart';
+import 'package:capstone_project/screens/mypage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +37,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: LoginPage(),
+      home: MyPage(),
     );
   }
 }
