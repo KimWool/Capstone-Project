@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# FastAPI backend 관련 무시 항목
+/backend/venv/
+/backend/__pycache__/
+/backend/.env
+
+# Python 백엔드 관련
+__pycache__/
+*.pyo
+*.pyd
+venv/
+.env
+alembic/versions/
+
+# DB, 캐시 파일
+*.sqlite3
+*.db
