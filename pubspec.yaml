@@ -75,6 +75,9 @@ flutter:
     - assets/chart_underbar.png
     - assets/mypage_icon.png
     - assets/pencil_icon.png
+    - assets/Home.png
+    - assets/Money.png
+    - assets/Document.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

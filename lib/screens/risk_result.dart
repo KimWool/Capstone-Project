@@ -183,9 +183,9 @@ class RiskResultPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Icon(
+                Icon(
                   Icons.play_arrow,
-                  color: Color(0xFFFF8A8A),
+                  color: themeColor,
                   size: 20,
                 ),
               ],
@@ -204,7 +204,7 @@ class RiskResultPage extends StatelessWidget {
             Container(
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFFDEEEE),
+                color: themeColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.all(12),
