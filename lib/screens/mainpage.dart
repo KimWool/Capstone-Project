@@ -30,46 +30,50 @@ class MainPage extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // 전세 사기 위험도 분석 카드
-              Container(
-                padding: const EdgeInsets.all(45),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1754),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        '전세 사기\n위험도 분석',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/main_circlechart.png',
-                          width: 80,
-                          height: 80,
-                        ),
-                        Positioned(
-                          left: 0,
-                          bottom: -5,
-                          child: Image.asset(
-                            'assets/main_search_icon.png',
-                            width: 50,
-                            height: 50,
+              // 전세 사기 위험도 분석(탭 가능)
+              GestureDetector(
+                onTap: () {
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(45),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1754),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '전세 사기\n위험도 분석',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/main_circlechart.png',
+                            width: 80,
+                            height: 80,
+                          ),
+                          Positioned(
+                            left: 0,
+                            bottom: -5,
+                            child: Image.asset(
+                              'assets/main_search_icon.png',
+                              width: 50,
+                              height: 50,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -77,18 +81,18 @@ class MainPage extends StatelessWidget {
 
               // 실거래가 분석 + 계약 단계별 정보 카드
               Row(
-                mainAxisAlignment: MainAxisAlignment.center, // 중앙 정렬
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _smallCard(
                     title: '실거래가 분석',
                     iconPath: 'assets/map_icon.png',
                     onTap: () {},
-                    cardColor: Color(0xFF83A5F6),
+                    cardColor: const Color(0xFF83A5F6),
                     titleAlignment: MainAxisAlignment.end,
                     isIconLeft: true,
                     iconAlignment: MainAxisAlignment.start,
                   ),
-                  const SizedBox(width: 20), // 카드 사이 간격
+                  const SizedBox(width: 20),
                   _smallCard(
                     title: '계약 단계별 정보',
                     iconPath: 'assets/Chart.png',
@@ -139,7 +143,8 @@ class MainPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 40), // 하단 여유 공간
+
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -147,15 +152,15 @@ class MainPage extends StatelessWidget {
     );
   }
 
+  // 소형 카드 위젯(재사용)
   Widget _smallCard({
     required String title,
     required String iconPath,
     required VoidCallback onTap,
     Color? cardColor,
-    bool isIconLeft = true, // 아이콘 위치 조정 (왼쪽/오른쪽)
-    MainAxisAlignment titleAlignment = MainAxisAlignment.center, // 텍스트 정렬 (왼쪽/오른쪽)
+    bool isIconLeft = true,
+    MainAxisAlignment titleAlignment = MainAxisAlignment.center,
     MainAxisAlignment iconAlignment = MainAxisAlignment.center,
-
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -171,7 +176,7 @@ class MainPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisAlignment: titleAlignment, // 텍스트 정렬
+              mainAxisAlignment: titleAlignment,
               children: [
                 Text(
                   title,

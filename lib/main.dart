@@ -6,6 +6,10 @@ import 'package:capstone_project/screens/mainpage.dart';
 import 'package:capstone_project/screens/risk_analysis.dart';
 import 'package:capstone_project/screens/risk_result.dart';
 import 'package:capstone_project/screens/mypage.dart';
+import 'package:capstone_project/screens/real_transaction_analysis.dart';
+import 'package:capstone_project/screens/real_transaction_report.dart';
+import 'package:capstone_project/screens/contract_info_step.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -37,7 +41,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: MyPage(),
+      home: LoginPage(),
     );
   }
 }

@@ -6,247 +6,138 @@ class CreateAccountPage extends StatefulWidget {
 }
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
+  final TextEditingController idController = TextEditingController();
+  final TextEditingController pwController = TextEditingController();
+  final TextEditingController pwConfirmController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+
+  @override
+  void dispose() {
+    idController.dispose();
+    pwController.dispose();
+    pwConfirmController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  void _onSignUpPressed() {
+    final id = idController.text;
+    final pw = pwController.text;
+    final pwConfirm = pwConfirmController.text;
+    final email = emailController.text;
+    final phone = phoneController.text;
+
+    print('아이디: $id');
+    print('비밀번호: $pw');
+    print('비밀번호 확인: $pwConfirm');
+    print('이메일: $email');
+    print('휴대폰 번호: $phone');
+
+    // TODO: 회원가입 처리 로직 연결
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold( // Scaffold로 감싸서 안전하게 화면 구성
-        body: Container(
-          width: 402,
-          height: 874,
-          decoration: BoxDecoration(
-            color : Color.fromRGBO(255, 255, 255, 1),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          '회원가입',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
-          child: Stack(
-              children: <Widget>[
-                Positioned(
-                    top: 154,
-                    left: 136,
-                    child: Container(
-                        width: 225,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          borderRadius : BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                          ),
-                          color : Color.fromRGBO(255, 255, 255, 1),
-                          border : Border.all(
-                            color: Color.fromRGBO(0, 0, 0, 1),
-                            width: 1,
-                          ),
-                        )
-                    )
-                ),Positioned(
-                    top: 221,
-                    left: 136,
-                    child: Container(
-                        width: 225,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          borderRadius : BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                          ),
-                          color : Color.fromRGBO(255, 255, 255, 1),
-                          border : Border.all(
-                            color: Color.fromRGBO(0, 0, 0, 1),
-                            width: 1,
-                          ),
-                        )
-                    )
-                ),Positioned(
-                    top: 276,
-                    left: 136,
-                    child: Container(
-                        width: 225,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          borderRadius : BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                          ),
-                          color : Color.fromRGBO(255, 255, 255, 1),
-                          border : Border.all(
-                            color: Color.fromRGBO(0, 0, 0, 1),
-                            width: 1,
-                          ),
-                        )
-                    )
-                ),Positioned(
-                    top: 346,
-                    left: 136,
-                    child: Container(
-                        width: 225,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          borderRadius : BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                          ),
-                          color : Color.fromRGBO(255, 255, 255, 1),
-                          border : Border.all(
-                            color: Color.fromRGBO(0, 0, 0, 1),
-                            width: 1,
-                          ),
-                        )
-                    )
-                ),Positioned(
-                    top: 413,
-                    left: 136,
-                    child: Container(
-                        width: 225,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          borderRadius : BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                          ),
-                          color : Color.fromRGBO(255, 255, 255, 1),
-                          border : Border.all(
-                            color: Color.fromRGBO(0, 0, 0, 1),
-                            width: 1,
-                          ),
-                        )
-                    )
-                ),Positioned(
-                    top: 164,
-                    left: 28,
-                    child: Text('아이디', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 1),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 231,
-                    left: 28,
-                    child: Text('비밀번호', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 1),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 356,
-                    left: 28,
-                    child: Text('이메일', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 1),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 423,
-                    left: 28,
-                    child: Text('휴대폰 번호', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 1),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 164,
-                    left: 145,
-                    child: Text('아이디 입력', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 0.23000000417232513),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 231,
-                    left: 144,
-                    child: Text('비밀번호 입력', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 0.23000000417232513),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 286,
-                    left: 144,
-                    child: Text('비밀번호 재입력', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 0.23000000417232513),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 356,
-                    left: 144,
-                    child: Text('이메일 입력', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 0.23000000417232513),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 423,
-                    left: 144,
-                    child: Text('010 - 0000 - 0000', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(0, 0, 0, 0.23000000417232513),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),Positioned(
-                    top: 543,
-                    left: 86,
-                    child: Container(
-                        width: 244,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          borderRadius : BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5),
-                            bottomLeft: Radius.circular(5),
-                            bottomRight: Radius.circular(5),
-                          ),
-                          color : Color.fromRGBO(25, 22, 83, 1),
-                        )
-                    )
-                ),Positioned(
-                    top: 555,
-                    left: 174,
-                    child: Text('가입하기', textAlign: TextAlign.left, style: TextStyle(
-                        color: Color.fromRGBO(255, 255, 255, 1),
-                        fontFamily: 'Noto Sans',
-                        fontSize: 18,
-                        letterSpacing: 0 /*percentages not used in flutter. defaulting to zero*/,
-                        fontWeight: FontWeight.normal,
-                        height: 1
-                    ),)
-                ),
-              ]
-          )
         ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInputFieldRow('아이디', idController, '아이디 입력'),
+            _buildInputFieldRow('비밀번호', pwController, '비밀번호 입력', obscureText: true),
+            _buildInputFieldRow('', pwConfirmController, '비밀번호 재입력', obscureText: true),
+            _buildInputFieldRow('이메일', emailController, '이메일 입력'),
+            _buildInputFieldRow('휴대폰 번호', phoneController, '010 - 0000 - 0000', keyboardType: TextInputType.phone),
+            const SizedBox(height: 40),
+            Center(
+              child: ElevatedButton(
+                onPressed: _onSignUpPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF010186),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  '가입하기',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputFieldRow(
+      String label,
+      TextEditingController controller,
+      String hint, {
+        bool obscureText = false,
+        TextInputType keyboardType = TextInputType.text,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              decoration: InputDecoration(
+                hintText: hint,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: Color(0xFF010186)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
