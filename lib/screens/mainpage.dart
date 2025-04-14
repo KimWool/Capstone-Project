@@ -149,6 +149,31 @@ class MainPage extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
+        currentIndex: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF010186),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/home_icon.png')),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/analysis_solid_icon.png')),
+            label: '위험도 분석',
+          ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/chart_underbar.png')),
+            label: '계약서 정보',
+          ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/mypage_icon.png')),
+            label: '마이페이지',
+          ),
+        ],
+      ),
     );
   }
 
