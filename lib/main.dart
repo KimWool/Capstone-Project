@@ -41,7 +41,14 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: MainPage(),
+      // initialRoute 나 home 사용
+      initialRoute: '/login',
+      routes: {
+        '/login': (ctx) => LoginPage(),
+        '/sign_up': (ctx) => SignUpPage(),
+        '/create_account': (ctx) => CreateAccountPage(),
+        '/main': (ctx) => MainPage(),
+      },
     );
   }
 }

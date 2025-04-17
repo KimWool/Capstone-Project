@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:capstone_project/screens/create_account.dart';
 
 
+
 class SignUpPage extends StatefulWidget {
   @override
   _SignUpPageState createState() => _SignUpPageState();

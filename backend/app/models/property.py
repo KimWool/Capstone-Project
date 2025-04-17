@@ -1,5 +1,5 @@
 # backend/app/models/property.py
-# Property(전세 매물) 테이블 모델로, 주소, 상세 주소, 평가 금액 및 위험 요약 등 부동산 관련 정보
+# Property(전세 매물) 테이블 모델로, 주소, 상세 주소 등 부동산 관련 정보 관리
 from sqlalchemy import Column, Integer, String, Float, DateTime, func
 from app.db.session import Base
 

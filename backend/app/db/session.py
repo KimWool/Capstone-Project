@@ -1,19 +1,25 @@
 # backend/app/db/session.py
+
 import os
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-load_dotenv()  # .env 파일에서 환경 변수 로드
+load_dotenv()  # .env에서 DATABASE_URL 불러오기
 
-# .env 파일에 정의된 DATABASE_URL 사용
+# URL 예시: postgresql+asyncpg://user:pw@localhost:5432/dbname
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_async_engine(DATABASE_URL, echo=True)
+SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
+
 Base = declarative_base()
 
-def init_db():
-    # 모델에 정의된 모든 테이블을 생성
-    from app.models import user, property  # 임포트해 모든 모델 모듈이 로드되게 함
-    Base.metadata.create_all(bind=engine)
+# <-- 이 부분만 교체: async def로 정의하고, 호출하지 마세요!
+async def get_db():
+    """
+    FastAPI 의존성 주입 함수.
+    비동기 세션을 yield 후 자동으로 닫습니다.
+    """
+    async with SessionLocal() as session:
+        yield session

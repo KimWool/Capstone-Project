@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:capstone_project/services/api_service.dart'; // 내 서비스 위치 맞춰서 import
 
 class CreateAccountPage extends StatefulWidget {
   @override
@@ -6,11 +7,14 @@ class CreateAccountPage extends StatefulWidget {
 }
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
-  final TextEditingController idController = TextEditingController();
-  final TextEditingController pwController = TextEditingController();
-  final TextEditingController pwConfirmController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController idController         = TextEditingController();
+  final TextEditingController pwController         = TextEditingController();
+  final TextEditingController pwConfirmController  = TextEditingController();
+  final TextEditingController emailController      = TextEditingController();
+  final TextEditingController phoneController      = TextEditingController();
+
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -22,73 +26,87 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     super.dispose();
   }
 
-  void _onSignUpPressed() {
-    final id = idController.text;
-    final pw = pwController.text;
+  Future<void> _onSignUpPressed() async {
+    final id        = idController.text.trim();
+    final pw        = pwController.text;
     final pwConfirm = pwConfirmController.text;
-    final email = emailController.text;
-    final phone = phoneController.text;
+    final email     = emailController.text.trim();
+    final phone     = phoneController.text.trim();
 
-    print('아이디: $id');
-    print('비밀번호: $pw');
-    print('비밀번호 확인: $pwConfirm');
-    print('이메일: $email');
-    print('휴대폰 번호: $phone');
+    // 1) 비밀번호 확인
+    if (pw != pwConfirm) {
+      setState(() => _error = "비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    // 2) 필수 항목 체크
+    if (id.isEmpty || pw.isEmpty || email.isEmpty) {
+      setState(() => _error = "아이디, 비밀번호, 이메일은 필수 입력입니다.");
+      return;
+    }
 
-    // TODO: 회원가입 처리 로직 연결
+    setState(() {
+      _loading = true;
+      _error   = null;
+    });
+
+    // 3) ApiService 호출
+    try {
+      final result = await ApiService.signUpEmail(
+        email:    email,
+        username: id,
+        password: pw,
+      );
+
+      if (result["success"] == true) {
+        print("회원가입 ok");
+        Navigator.pushReplacementNamed(context, "/login");
+      } else {
+        print("가입 실패");
+        setState(() => _error = result["message"] as String);
+      }
+    } catch (e) {
+      setState(() => _error = "네트워크 오류가 발생했습니다.");
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          '회원가입',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(/* ... */),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInputFieldRow('아이디', idController, '아이디 입력'),
-            _buildInputFieldRow('비밀번호', pwController, '비밀번호 입력', obscureText: true),
-            _buildInputFieldRow('', pwConfirmController, '비밀번호 재입력', obscureText: true),
-            _buildInputFieldRow('이메일', emailController, '이메일 입력'),
-            _buildInputFieldRow('휴대폰 번호', phoneController, '010 - 0000 - 0000', keyboardType: TextInputType.phone),
+            _buildInputFieldRow("아이디", idController, "아이디 입력"),
+            _buildInputFieldRow("비밀번호", pwController, "비밀번호 입력", obscureText: true),
+            _buildInputFieldRow("", pwConfirmController, "비밀번호 재입력", obscureText: true),
+            _buildInputFieldRow("이메일", emailController, "이메일 입력", keyboardType: TextInputType.emailAddress),
+            _buildInputFieldRow("휴대폰 번호", phoneController, "010-0000-0000", keyboardType: TextInputType.phone),
+
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_error!, style: const TextStyle(color: Colors.red)),
+              ),
+
             const SizedBox(height: 40),
             Center(
               child: ElevatedButton(
-                onPressed: _onSignUpPressed,
+                onPressed: _loading ? null : _onSignUpPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF010186),
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text(
-                  '가입하기',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: _loading
+                    ? const SizedBox(
+                  width: 20, height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+                    : const Text("가입하기", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -101,21 +119,14 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       String label,
       TextEditingController controller,
       String hint, {
-        bool obscureText = false,
+        bool obscureText      = false,
         TextInputType keyboardType = TextInputType.text,
       }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          SizedBox(width: 100, child: Text(label, style: const TextStyle(fontSize: 16))),
           Expanded(
             child: TextField(
               controller: controller,

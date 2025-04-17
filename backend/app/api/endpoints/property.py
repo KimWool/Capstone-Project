@@ -5,6 +5,10 @@ from typing import List
 from pydantic import BaseModel
 from app.db.session import SessionLocal
 from app.models.property import Property
+from app.services.external_api import fetch_registry_data, fetch_building_data, extract_metadata
+from app.services.embedding import embed_text
+from app.services.vector_db import init_chroma_client, store_metadata_vector, search_metadata_vector
+
 
 router = APIRouter()
 
@@ -76,3 +80,27 @@ def update_property(property_id: int, prop_update: PropertyUpdate, db: Session =
     db.commit()
     db.refresh(prop)
     return prop
+@router.get("/fetch-registry")
+async def get_registry(query: str):
+    try:
+        raw_data = fetch_registry_data({"query": query})
+        metadata = extract_metadata(raw_data)
+        # 예: 메타데이터의 핵심 텍스트 (필요에 따라 조합)
+        text = f"{metadata.get('owner')} {metadata.get('address')}"
+        vector = embed_text(text)
+        # Chroma에 저장
+        client = init_chroma_client()
+        store_metadata_vector(client, "registry_collection", vector, metadata)
+        return {"metadata": metadata}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/search-metadata")
+async def search_metadata(query: str):
+    try:
+        query_vector = embed_text(query)
+        client = init_chroma_client()
+        results = search_metadata_vector(client, "registry_collection", query_vector)
+        return {"results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
