@@ -39,7 +39,7 @@ class ApiService {
     required String email,
     required String password,
   }) async {
-    final uri = Uri.parse("$_baseUrl/api/auth/login");
+    final uri = Uri.parse("$_baseUrl/auth/login/email");
     final resp = await http.post(
       uri,
       headers: {"Content-Type": "application/json"},
@@ -51,7 +51,6 @@ class ApiService {
 
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     if (resp.statusCode == 200) {
-      // 예: { "access_token": "...", "token_type": "bearer" }
       return {"success": true, "data": body};
     } else {
       return {"success": false, "message": body["detail"] ?? "Invalid credentials"};

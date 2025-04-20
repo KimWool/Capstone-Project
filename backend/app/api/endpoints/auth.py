@@ -19,6 +19,11 @@ class SignupEmailRequest(BaseModel):
     password: str
     username: Optional[str] = None
 
+class LoginEmailRequest(BaseModel):
+    email: str
+    password: str
+
+
 load_dotenv()
 
 router = APIRouter()
@@ -58,13 +63,17 @@ async def signup_email(
     token = create_access_token({"sub": str(new_user.user_id)})
     return {"access_token": token, "user": new_user.email}
 
+
 # 이메일 로그인 엔드포인트
 @router.post("/login/email")
 async def login_email(
-    email: str,
-    password: str,
+    body: LoginEmailRequest,
     db: AsyncSession = Depends(get_db)
 ):
+    
+    email = body.email
+    password = body.password
+
     result = await db.execute(
         select(User).where(User.email == email, User.provider == "email")
     )

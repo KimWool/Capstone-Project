@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:capstone_project/screens/mainpage.dart';
 import 'package:capstone_project/screens/sign_up.dart';
+import 'package:capstone_project/services/api_service.dart';
+
 
 class LoginPage extends StatefulWidget {
   @override
@@ -10,6 +12,47 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool _loading = false; //로그인 중 표시용
+  String? _error; //에러 메시지
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onLoginPressed() async {
+    final email = _idController.text.trim();
+    final pw    = _passwordController.text;
+
+    if (email.isEmpty || pw.isEmpty) {
+      setState(() => _error = "아이디와 비밀번호를 입력하세요.");
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error   = null;
+    });
+
+    final result = await ApiService.login(email: email, password: pw);
+
+    setState(() {
+      _loading = false;
+    });
+
+    if (result["success"] == true) {
+      // 로그인 성공 → MainPage 로 교체 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+      );
+    } else {
+      setState(() => _error = result["message"] as String);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,21 +97,30 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+          // 에러 메시지
+          if (_error != null)
+            Positioned(
+              top: 360,
+              left: 71,
+              child: SizedBox(
+                width: 259,
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ),
+          // 로그인 버튼 or 로딩 인디케이터
           Positioned(
             top: 391,
             left: 71,
             child: SizedBox(
               width: 259,
               height: 45,
-              child: ElevatedButton(
-                onPressed: () {
-                  print("ID: ${_idController.text}");
-                  print("PW: ${_passwordController.text}");
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MainPage()),
-                  );
-                },
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                onPressed: _onLoginPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: const BorderSide(color: Colors.black),
@@ -83,22 +135,24 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+
+          // 회원가입 링크
           Positioned(
             top: 448,
             left: 76,
             child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignUpPage()),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => SignUpPage()),
+              ),
               child: const Text(
                 '회원가입',
                 style: TextStyle(fontSize: 13),
               ),
             ),
           ),
+
+          // 나머지 SNS 로그인 버튼들 (생략 가능)
           Positioned(
             top: 481,
             left: 46,
@@ -150,12 +204,5 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _idController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
