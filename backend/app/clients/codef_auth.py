@@ -1,17 +1,27 @@
 # app/clients/codef_auth.py
 # codef 토큰 발급 모듈
 import httpx
-from app.config import CODEF_CLIENT_ID, CODEF_CLIENT_SECRET, CODEF_API_HOST_DEV
+import base64
+import os
 
-AUTH_URL = f"{CODEF_API_HOST_DEV}/v2/auth/authenticate"
+async def get_codef_token():
+    client_id = os.getenv("CODEF_CLIENT_ID")
+    client_secret = os.getenv("CODEF_CLIENT_SECRET")
 
-async def get_codef_token() -> str:
-    """Codef 에서 Bearer 토큰을 발급받는다."""
-    payload = {
-        "client_id":     CODEF_CLIENT_ID,
-        "client_secret": CODEF_CLIENT_SECRET,
+    basic_token = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
+
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": f"Basic {basic_token}",
     }
-    async with httpx.AsyncClient() as cli:
-        r = await cli.post(AUTH_URL, json=payload)
-        r.raise_for_status()
-        return r.json()["data"]["token"]
+    data = "grant_type=client_credentials&scope=read"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://oauth.codef.io/oauth/token",
+            headers=headers,
+            content=data,
+        )
+        response.raise_for_status()
+        return response.json()["access_token"]
+

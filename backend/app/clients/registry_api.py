@@ -1,10 +1,10 @@
 # app/clients/registry_api.py
 import httpx
-from app.config import CODEF_API_HOST_DEV
+from app.config import CODEF_API_HOST
 from app.clients.codef_auth import get_codef_token
 
-# 샌드박스 엔드포인트 예시; 운영 시 CODEF_API_HOST로 교체
-REG_URL = f"{CODEF_API_HOST_DEV}/v1/real-estate/register/jibun"
+# 데모전; 운영 시 CODEF_API_HOST로 교체
+REG_URL = f"{CODEF_API_HOST}/v1/real-estate/register/jibun"
 
 async def fetch_registry(jibun: str) -> dict:
     """

@@ -1,19 +1,56 @@
 # app/services/vector_db.py
-import chromadb  # Chroma의 Python 클라이언트 라이브러리
+# ─────────────────────────────────────────
+# Chroma VectorDB 연동 모듈
 
-def init_chroma_client():
-    client = chromadb.Client()  # 세부설정은 문서 참고
-    return client
+import os
+import chromadb
+from chromadb.utils import embedding_functions
 
-def store_metadata_vector(client, collection_name: str, vector, metadata: dict):
-    collection = client.get_or_create_collection(collection_name)
-    collection.add(
-        documents=[metadata.get('text', '')],  # 혹은 원본 메타데이터의 일부
-        embeddings=[vector],
-        metadatas=[metadata]
+# ┌─ 1) 임베디드(in-process) 모드로 Chroma Client 초기화
+client = chromadb.Client()
+
+# ┌─ 2) 임베딩 함수 설정
+# OpenAI 키가 있으면 OpenAI 사용, 없으면 Sentence-Transformers 사용
+openai_key = os.getenv("OPENAI_API_KEY")
+if openai_key:
+    embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+        api_key=openai_key,
+        model_name="text-embedding-ada-002"
+    )
+else:
+    embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name_or_path="all-MiniLM-L6-v2"
     )
 
-def search_metadata_vector(client, collection_name: str, query_vector, n_results=5):
-    collection = client.get_collection(collection_name)
-    results = collection.query(query_vector=query_vector, n_results=n_results)
-    return results
+# ┌─ 3) 컬렉션 생성 또는 가져오기
+collection = client.get_or_create_collection(
+    name="property_docs",
+    embedding_function=embedding_function
+)
+
+# ┌─ 4) Upsert 함수
+# docs: list of {id, text, metadata}
+def upsert_property_docs(docs: list[dict]):
+    ids = [d["id"] for d in docs]
+    texts = [d["text"] for d in docs]
+    metadatas = [d["metadata"] for d in docs]
+    collection.upsert(
+        documents=texts,
+        metadatas=metadatas,
+        ids=ids
+    )
+
+# ┌─ 5) Query 함수
+# query_similar_documents: 텍스트 질의로 top-n 유사 문서 반환
+def query_similar_documents(query: str, n_results: int = 5) -> list[dict]:
+    results = collection.query(
+        query_texts=[query],
+        n_results=n_results
+    )
+    ids = results["ids"][0]
+    metadatas = results["metadatas"][0]
+    distances = results["distances"][0]
+    return [
+        {"id": iid, "metadata": meta, "distance": dist}
+        for iid, meta, dist in zip(ids, metadatas, distances)
+    ]
