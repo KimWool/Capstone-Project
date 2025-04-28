@@ -1,4 +1,5 @@
 # backend/app/api/endpoints/users.py
+import uuid 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -44,8 +45,15 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
     hashed_pw = get_password_hash(user.password)
-    new_user = User(email=user.email, username=user.username, hashed_password=hashed_pw, provider="email")
+    new_user = User(
+        user_id=str(uuid.uuid4()),  # ✅ 이거 꼭 추가!
+        email=user.email,
+        username=user.username,
+        hashed_password=hashed_pw,
+        provider="email"
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

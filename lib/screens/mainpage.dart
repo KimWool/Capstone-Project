@@ -47,7 +47,7 @@ class MainPage extends StatelessWidget {
                           '전세 사기\n위험도 분석',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 30,
+                            fontSize: 25,
                             fontWeight: FontWeight.bold,
                             height: 1.3,
                           ),

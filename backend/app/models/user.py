@@ -5,7 +5,7 @@ from app.db.session import Base
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(255), primary_key=True, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), nullable=True)
     provider = Column(String(50), default="email")  # 예: email, kakao, naver

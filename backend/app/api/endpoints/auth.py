@@ -1,4 +1,5 @@
 # backend/app/api/endpoints/auth.py
+import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,7 +12,6 @@ from typing import Optional
 from app.db.session import get_db
 from app.models.user import User
 from app.services.auth import create_access_token, get_password_hash, verify_password
-
 
 
 class SignupEmailRequest(BaseModel):
@@ -49,11 +49,13 @@ async def signup_email(
 
     # 비밀번호 해시 및 사용자 생성
     hashed_pw = get_password_hash(password)
+
     new_user = User(
-        email=email,
-        username=username,
-        hashed_password=hashed_pw,
-        provider="email"
+    user_id=str(uuid.uuid4()),   # <- 여기 추가!
+    email=email,
+    username=username,
+    hashed_password=hashed_pw,
+    provider="email"
     )
     db.add(new_user)
     await db.commit()
