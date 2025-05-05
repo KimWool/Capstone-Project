@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: capstone
+      POSTGRES_USER: capstone_user
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+asyncpg://capstone_user:1234@db:5432/capstone
+      SECRET_KEY: your_jwt_secret
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+
+volumes:
+  db_data:

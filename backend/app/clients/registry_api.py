@@ -19,3 +19,12 @@ async def fetch_registry(jibun: str) -> dict:
         r.raise_for_status()
         # 실제 response 구조: {"data": { … }}
         return r.json()["data"]
+    
+# registry_api.py
+def get_registry_info(address: str) -> dict:
+    # 실제 API 호출 로직 구현
+    return {
+        "owner": "홍길동",
+        "mortgage": "3억",
+        "lessor": "홍길동"
+    }

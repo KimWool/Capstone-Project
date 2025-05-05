@@ -49,3 +49,12 @@ async def get_title_info(plat_gb_cd: str, bun: str, ji: str) -> list[dict]:
             detail="건축물대장 조회 결과가 없습니다."
         )
     return items
+
+# building_api.py
+def get_building_info(address: str) -> dict:
+    # 실제 API 호출 로직 구현
+    return {
+        "usage": "다가구주택",
+        "completion": "2005년 7월",
+        "structure": "철근콘크리트"
+    }

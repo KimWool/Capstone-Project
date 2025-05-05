@@ -1,15 +1,87 @@
-### sllm_model.py: 메타데이터 추출용 sLLM 분석기
-from transformers import pipeline
+# services/sllm_model.py
 
-classifier = pipeline("text-classification", model="monologg/koelectra-small-v3-discriminator")
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from langchain_community.llms import HuggingFacePipeline
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
 
-# 실제 사용 시에는 Few-shot Prompting이나 custom 모델 적용 추천
-def analyze_documents(registry_text, building_text):
-    combined_text = registry_text + "\n" + building_text
-    # 프롬프트 방식 또는 파싱기 적용
-    meta = {
-        "근저당권": "있음" if "근저당" in combined_text else "없음",
-        "전세권": "없음" if "전세권 없음" in combined_text else "있음",
-        "소유자": "홍길동"  # 추후 LLM이 자동 추출하도록 개선
-    }
-    return meta
+# ─── 1) .env 파일 경로 지정 & 로드 ───────────────────────────────
+BASE_DIR = Path(__file__).resolve().parent.parent   # .../backend/app/services → .../backend
+env_path = BASE_DIR / ".env"
+if not env_path.is_file():
+    raise FileNotFoundError(f".env 파일이 없습니다: {env_path}")
+load_dotenv(env_path)
+
+hf_token = os.getenv("HF_TOKEN")
+if not hf_token:
+    raise ValueError(f"HF_TOKEN이 .env에서 로드되지 않았습니다: {env_path}")
+
+# ─── 2) 모델명 설정 ───────────────────────────────────────────
+model_name = "beomi/KoAlpaca-llama-1-7b"
+
+# ─── 3) 토크나이저 & 모델 로드 ─────────────────────────────────
+tokenizer = AutoTokenizer.from_pretrained(
+    model_name,
+    token=hf_token,
+    use_fast=False      # 느린 SP 토크나이저만 쓰도록 강제
+)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    token=hf_token
+)
+
+# ─── 4) 파이프라인 구성 ───────────────────────────────────────
+pipe = pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    max_new_tokens=256,
+    temperature=0.7,
+    do_sample=True,
+    repetition_penalty=1.1,
+    device=-1         # CPU
+)
+llm = HuggingFacePipeline(pipeline=pipe)
+
+# ─── 5) 위험도 예측용 Chain ───────────────────────────────────
+risk_prompt = PromptTemplate(
+    input_variables=["deposit", "period", "address"],
+    template="""
+당신은 부동산 전문가 AI입니다. 아래 정보를 바탕으로 전세계약의 사기 위험 가능성을 판단하세요.
+
+전세보증금: {deposit}원
+계약기간: {period}개월
+건물 주소: {address}
+
+예측 결과:
+"""
+)
+risk_chain = LLMChain(prompt=risk_prompt, llm=llm)
+
+def predict_risk(deposit: str, period: str, address: str) -> str:
+    return risk_chain.run({
+        "deposit": deposit,
+        "period": period,
+        "address": address
+    })
+
+# ─── 6) 메타데이터 요약용 Chain ────────────────────────────────
+metadata_prompt = PromptTemplate(
+    input_variables=["raw_text"],
+    template="""
+다음은 전세계약과 관련된 등기부등본 및 건축물대장 데이터입니다.
+해당 데이터를 기반으로 의미 있는 핵심 정보만 요약해 주세요.
+
+데이터:
+{raw_text}
+
+요약 결과:
+"""
+)
+metadata_chain = LLMChain(prompt=metadata_prompt, llm=llm)
+
+def extract_metadata(raw_text: str) -> str:
+    return metadata_chain.run({"raw_text": raw_text})

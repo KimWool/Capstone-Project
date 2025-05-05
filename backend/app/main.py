@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.endpoints import auth, property, users, building, registry, vector
+from app.api.endpoints import auth, property, users, building, registry, vector, analyze, prediction
 from app.db.session import engine, Base  # init_db 대신 engine, Base를 가져옵니다
 
 app = FastAPI()
@@ -30,3 +30,5 @@ app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(building.router)
 app.include_router(registry.router)
 app.include_router(vector.router)
+app.include_router(analyze.router, prefix="/analyze", tags=["Analyze"])
+app.include_router(prediction.router, prefix="/prediction", tags=["prediction"])

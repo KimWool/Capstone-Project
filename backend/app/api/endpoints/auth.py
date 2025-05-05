@@ -14,6 +14,7 @@ from app.models.user import User
 from app.services.auth import create_access_token, get_password_hash, verify_password
 
 
+
 class SignupEmailRequest(BaseModel):
     email: str
     password: str
