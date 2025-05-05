@@ -19,7 +19,7 @@ if openai_key:
     )
 else:
     embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name_or_path="all-MiniLM-L6-v2"
+        model_name="all-MiniLM-L6-v2"
     )
 
 # ┌─ 3) 컬렉션 생성 또는 가져오기

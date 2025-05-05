@@ -28,7 +28,7 @@ class UserOut(BaseModel):
     provider: str
 
     class Config:
-        orm_mode = True
+        frome_attributes = True
 
 # DB 세션 의존성
 def get_db():

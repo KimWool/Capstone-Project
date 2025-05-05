@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from app.db.session import SessionLocal
 from app.models.property import Property
-from app.clients.building_hub import get_title_info
+from app.clients.building_api import get_building_title_info
 from app.clients.registry_api import fetch_registry
 from app.services.vector_db import upsert_property_docs
 
@@ -40,7 +40,7 @@ class PropertyOut(PropertyCreate):
     property_id: int
 
     class Config:
-        orm_mode = True
+        form_attributes = True
 
 # CRUD Endpoints
 @router.post("/", response_model=PropertyOut)
@@ -84,7 +84,14 @@ async def ingest_property(
     ji: str = Query(..., description="지번 부번, ex: '45'")
 ):
     # 1) 건축물대장 조회
-    building_items = await get_title_info(plat_gb_cd, bun, ji)
+    real_estate_unique_number = f"{plat_gb_cd.zfill(10)}{bun.zfill(4)}{ji.zfill(4)}"
+    try:
+        building_item = await get_building_title_info(real_estate_unique_number)
+        if not isinstance(building_item, dict):
+            raise HTTPException(status_code=502, detail="건축물대장 응답 형식 오류")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"건축물대장 조회 실패: {e}")
+    building_items = [building_item]  # 기존 로직과 호환을 위해 리스트로 래핑
 
     # 2) 등기부등본 조회
     jibun = f"{bun}-{ji}"
