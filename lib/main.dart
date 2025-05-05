@@ -9,6 +9,7 @@ import 'package:capstone_project/screens/mypage.dart';
 import 'package:capstone_project/screens/real_transaction_analysis.dart';
 import 'package:capstone_project/screens/real_transaction_report.dart';
 import 'package:capstone_project/screens/contract_info_step.dart';
+import 'package:capstone_project/screens/chat.dart';
 
 
 void main() {
@@ -42,12 +43,13 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       // initialRoute 나 home 사용
-      initialRoute: '/login',
+      initialRoute: '/chat',
       routes: {
         '/login': (ctx) => LoginPage(),
         '/sign_up': (ctx) => SignUpPage(),
         '/create_account': (ctx) => CreateAccountPage(),
         '/main': (ctx) => MainPage(),
+        '/chat': (ctx) => Chat(),
       },
     );
   }
