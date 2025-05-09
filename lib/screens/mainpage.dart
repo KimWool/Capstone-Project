@@ -33,6 +33,7 @@ class MainPage extends StatelessWidget {
               // 전세 사기 위험도 분석(탭 가능)
               GestureDetector(
                 onTap: () {
+                  Navigator.pushNamed(context, '/risk_analysis');
                 },
                 child: Container(
                   padding: const EdgeInsets.all(45),
@@ -86,7 +87,9 @@ class MainPage extends StatelessWidget {
                   _smallCard(
                     title: '실거래가 분석',
                     iconPath: 'assets/map_icon.png',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/real_transaction_analysis');
+                    },
                     cardColor: const Color(0xFF83A5F6),
                     titleAlignment: MainAxisAlignment.end,
                     isIconLeft: true,
@@ -96,7 +99,9 @@ class MainPage extends StatelessWidget {
                   _smallCard(
                     title: '계약 단계별 정보',
                     iconPath: 'assets/Chart.png',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/contract_info_step');
+                    },
                     titleAlignment: MainAxisAlignment.start,
                     isIconLeft: false,
                     iconAlignment: MainAxisAlignment.end,
@@ -108,7 +113,9 @@ class MainPage extends StatelessWidget {
 
               // 전세 사기 예방법 가이드북
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, '/chat');
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -155,6 +162,21 @@ class MainPage extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF010186),
         unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/risk_analysis');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/contract_info_step');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/my');
+              break;
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/home_icon.png')),

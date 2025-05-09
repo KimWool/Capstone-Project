@@ -37,6 +37,8 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
     print('계약기간: ${isDurationUnknown ? "모름" : duration}');
     print('주소: $address');
     print('상세주소: ${isDetailAddressUnknown ? "모름" : detailAddress}');
+
+    Navigator.pushNamed(context, '/risk_result');
   }
 
   @override
@@ -152,6 +154,21 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF010186),
         unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushNamed(context, '/main');
+              break;
+            case 1:
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/contract_info_step');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/my');
+              break;
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/home_icon.png')),
