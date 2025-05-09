@@ -132,6 +132,21 @@ class MyPage extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF010186),
         unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushNamed(context, '/main');
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/risk_analysis');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/contract_info_step');
+              break;
+            case 3:
+              break;
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/home_icon.png')),

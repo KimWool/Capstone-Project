@@ -26,7 +26,9 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
 
     print('입력한 동네: $location');
     print('입력한 전세 금액: $price');
+
     // TODO: 이후 실거래가 분석 로직 연결
+    Navigator.pushNamed(context, '/real_transaction_report');
   }
 
   @override
@@ -106,6 +108,21 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF010186),
         unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushNamed(context, '/main');
+              break;
+            case 1:
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/contract_info_step');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/my');
+              break;
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/home_icon.png')),

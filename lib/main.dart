@@ -10,6 +10,8 @@ import 'package:capstone_project/screens/real_transaction_analysis.dart';
 import 'package:capstone_project/screens/real_transaction_report.dart';
 import 'package:capstone_project/screens/contract_info_step.dart';
 import 'package:capstone_project/screens/chat.dart';
+import 'package:capstone_project/screens/edit_profile.dart';
+import 'package:capstone_project/screens/risk_detail.dart';
 
 
 void main() {
@@ -43,13 +45,25 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       // initialRoute 나 home 사용
-      initialRoute: '/chat',
+      initialRoute: '/login',
       routes: {
         '/login': (ctx) => LoginPage(),
         '/sign_up': (ctx) => SignUpPage(),
         '/create_account': (ctx) => CreateAccountPage(),
         '/main': (ctx) => MainPage(),
         '/chat': (ctx) => Chat(),
+        '/contract_info_step': (ctx) => ContractInfoStepPage(),
+        '/edit_profile': (ctx) => EditProfilePage(),
+        '/my': (ctx) => MyPage(),
+        '/real_transaction_analysis': (ctx) => RealTransactionAnalysisPage(),
+        '/real_transaction_report': (ctx) => RealTransactionReportPage(),
+        '/risk_analysis': (ctx) => RiskAnalysisPage(),
+        '/risk_detail': (ctx) => RiskDetailPage( //임시 디폴트 값
+          title: '위험도 분석',
+          score: 85,
+          themeColor: Colors.white,
+        ),
+        '/risk_result': (ctx) => RiskResultPage(),
       },
     );
   }
