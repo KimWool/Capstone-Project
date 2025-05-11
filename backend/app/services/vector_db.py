@@ -1,26 +1,14 @@
-# app/services/vector_db.py
-# ─────────────────────────────────────────
-# Chroma VectorDB 연동 모듈
-
-import os
 import chromadb
 from chromadb.utils import embedding_functions
 
 # ┌─ 1) 임베디드(in-process) 모드로 Chroma Client 초기화
 client = chromadb.Client()
 
-# ┌─ 2) 임베딩 함수 설정
-# OpenAI 키가 있으면 OpenAI 사용, 없으면 Sentence-Transformers 사용
-openai_key = os.getenv("OPENAI_API_KEY")
-if openai_key:
-    embedding_function = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=openai_key,
-        model_name="text-embedding-ada-002"
-    )
-else:
-    embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name_or_path="all-MiniLM-L6-v2"
-    )
+# ┌─ 2) 임베딩 함수 설정 
+# 인자명 없이 모델 이름만 전달 (중복 오류 방지)
+embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+    "jhgan/ko-sroberta-multitask"
+)
 
 # ┌─ 3) 컬렉션 생성 또는 가져오기
 collection = client.get_or_create_collection(
@@ -29,7 +17,6 @@ collection = client.get_or_create_collection(
 )
 
 # ┌─ 4) Upsert 함수
-# docs: list of {id, text, metadata}
 def upsert_property_docs(docs: list[dict]):
     ids = [d["id"] for d in docs]
     texts = [d["text"] for d in docs]
@@ -41,7 +28,6 @@ def upsert_property_docs(docs: list[dict]):
     )
 
 # ┌─ 5) Query 함수
-# query_similar_documents: 텍스트 질의로 top-n 유사 문서 반환
 def query_similar_documents(query: str, n_results: int = 5) -> list[dict]:
     results = collection.query(
         query_texts=[query],
@@ -55,33 +41,32 @@ def query_similar_documents(query: str, n_results: int = 5) -> list[dict]:
         for iid, meta, dist in zip(ids, metadatas, distances)
     ]
 
-# 분석 결과 (LLM 요약 + 점수) 저장용 함수
+# ┌─ 6) 분석 결과 저장용 함수
 def store_full_analysis(case_id: str, summary: str, score: dict, address: str):
     collection.upsert(
         documents=[summary],
         metadatas=[{
             "score": score["score"],
-            "grade": score["grade"],
-            "reasons": score["reasons"],
+            "level": score["level"],
+            "reasons": ", ".join(score.get("reasons", [])) if isinstance(score.get("reasons"), list) else "",
             "address": address
         }],
         ids=[f"analyzed-{case_id}"]
     )
 
-# 초기 원시 데이터를 VectorDB에 저장하는 함수
+# ┌─ 7) 텍스트 포맷 정리 함수
 def build_vector_docs(registry_list, building_list):
     docs = []
     for reg, bld in zip(registry_list, building_list):
         case_id = reg["case_id"]
-        text = f"""
-        [등기부등본]
-        소유자: {reg['owner_name']}, 용도: {reg['building_purpose']}, 구조: {reg['building_structure']}
-        권리사항: {reg.get('rights', [])}
-
-        [건축물대장]
-        소유자: {bld['owner_name']}, 용도: {bld['building_purpose']}, 구조: {bld['building_structure']}
-        승인일: {bld['approval_date']}
-        """
+        text = (
+            f"[등기부등본] 소유자: {reg['owner_name']}, 용도: {reg['building_purpose']}, 구조: {reg['building_structure']}, "
+            f"전용면적: {reg['area_exclusive']}, 공유면적: {reg['area_shared']}, 연면적: {reg['area_total']}, "
+            f"준공년도: {reg['construction_year']}, 권리사항: {reg.get('rights', [])}. "
+            f"[건축물대장] 소유자: {bld['owner_name']}, 용도: {bld['building_purpose']}, 구조: {bld['building_structure']}, "
+            f"전용면적: {bld['area_exclusive']}, 공유면적: {bld['area_shared']}, 연면적: {bld['area_total']}, "
+            f"준공년도: {bld['construction_year']}, 승인일: {bld['approval_date']}."
+        )
         docs.append({
             "id": case_id,
             "text": text,
