@@ -10,7 +10,7 @@ from app.clients.codef_auth import get_second_codef_token
 # CODEF 개발 서버 엔드포인트
 CODEF_BUILDING_URL = f"{CODEF_API_HOST}/v1/kr/public/mw/building-register/general"
 
-async def get_building_title_info(body: dict) -> dict:
+async def get_building_info(body: dict) -> dict:
     """
     CODEF 건축물대장 표제부 API 호출
     :param body: 요청에 필요한 전체 파라미터 (realEstateUniqueNumber 포함)

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from app.db.session import SessionLocal
 from app.models.property import Property
-from app.clients.building_api import get_building_title_info
+from app.clients.building_api import get_building_info
 from app.clients.registry_api import fetch_registry
 from app.services.vector_db import upsert_property_docs
 
@@ -86,7 +86,7 @@ async def ingest_property(
     # 1) 건축물대장 조회
     real_estate_unique_number = f"{plat_gb_cd.zfill(10)}{bun.zfill(4)}{ji.zfill(4)}"
     try:
-        building_item = await get_building_title_info(real_estate_unique_number)
+        building_item = await get_building_info(real_estate_unique_number)
         if not isinstance(building_item, dict):
             raise HTTPException(status_code=502, detail="건축물대장 응답 형식 오류")
     except Exception as e:

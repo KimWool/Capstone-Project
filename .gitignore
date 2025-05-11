@@ -47,7 +47,7 @@ app.*.map.json
 # FastAPI backend 관련 무시 항목
 /backend/venv/
 /backend/__pycache__/
-/backend/.env
+/backend/app/.env
 
 # Python 백엔드 관련
 __pycache__/

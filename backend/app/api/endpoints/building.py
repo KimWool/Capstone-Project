@@ -1,7 +1,7 @@
 # app/api/endpoints/building.py
 
 from fastapi import APIRouter, HTTPException
-from app.clients.building_api import get_building_title_info
+from app.clients.building_api import get_building_info
 from app.schemas.building import TitleInfoItem
 from typing import List
 
@@ -32,7 +32,7 @@ async def title_info_path(
     }
 
     try:
-        data = await get_building_title_info(body)
+        data = await get_building_info(body)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

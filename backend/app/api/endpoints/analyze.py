@@ -3,7 +3,7 @@ from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse
 from app.clients.registry_api import get_registry_info
 from app.clients.building_api import get_building_info
 from app.services.sllm_model import extract_metadata
-from app.services.vector_db import store_metadata
+#from app.services.vector_db import store_metadata
 
 router = APIRouter()
 
@@ -25,6 +25,6 @@ def analyze_property(data: AnalyzeRequest):
     """
 
     summary = extract_metadata(raw_text)
-    store_metadata(data.address, summary)
+    #store_metadata(data.address, summary)
 
     return AnalyzeResponse(address=data.address, summary=summary)

@@ -3,11 +3,19 @@ import os
 import requests
 from dotenv import load_dotenv
 
+from app.clients.transaction_price_api import SERVICE_KEY
+
 load_dotenv()
 
 REGISTRY_API_URL = os.getenv("REGISTRY_API_URL")
 BUILDING_API_URL = os.getenv("BUILDING_API_URL")
+APT_TRANSACTION_PRICE_URL = os.getenv("APT_TRANSACTION_PRICE_URL")
+OFFI_TRANSACTION_PRICE_URL = os.getenv("OFFI_TRANSACTION_PRICE_URL")
+RH_TRANSACTION_PRICE_URL = os.getenv("RH_TRANSACTION_PRICE_URL")
+SH_TRANSACTION_PRICE_URL = os.getenv("SH_TRANSACTION_PRICE_URL")
+
 API_KEY = os.getenv("API_KEY")
+SERVICE_KEY = os.getenv("SERVICE_KEY")
 
 def fetch_registry_data(query_params: dict) -> dict:
     """등기부등본 API 호출"""
@@ -26,6 +34,50 @@ def fetch_building_data(query_params: dict) -> dict:
         "Content-Type": "application/json"
     }
     resp = requests.get(BUILDING_API_URL, params=query_params, headers=headers)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_apt_transaction_price_data(query_params: dict) -> dict:
+    """아파트_전월세_실거래가 API 호출"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(APT_TRANSACTION_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_offi_transaction_price_data(query_params: dict) -> dict:
+    """오피스텔_전월세_실거래가 API 호출"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(OFFI_TRANSACTION_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_rh_transaction_price_data(query_params: dict) -> dict:
+    """연립다세대_전월세_실거래가 API 호출(row house)"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(RH_TRANSACTION_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_sh_transaction_price_data(query_params: dict) -> dict:
+    """단독/다가구_전월세_실거래가 API 호출(single house)"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(SH_TRANSACTION_PRICE_URL, params=params)
     resp.raise_for_status()
     return resp.json()
 

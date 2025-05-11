@@ -1,7 +1,7 @@
 # api/endpoints/prediction.py
 from fastapi import APIRouter
 from pydantic import BaseModel
-from services.sllm_model import predict_risk
+from app.services.sllm_model import predict_risk
 
 router = APIRouter()
 
