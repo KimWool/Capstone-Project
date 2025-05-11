@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain_community.llms import HuggingFacePipeline
+from langchain.llms import HuggingFacePipeline
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
@@ -26,7 +26,7 @@ model_name = "beomi/KoAlpaca-llama-1-7b"
 tokenizer = AutoTokenizer.from_pretrained(
     model_name,
     token=hf_token,
-    use_fast=False      # 느린 SP 토크나이저만 쓰도록 강제
+    use_fast=False     # 느린 SP 토크나이저만 쓰도록 강제
 )
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
@@ -38,7 +38,7 @@ pipe = pipeline(
     "text-generation",
     model=model,
     tokenizer=tokenizer,
-    max_new_tokens=256,
+    max_new_tokens=64,
     temperature=0.7,
     do_sample=True,
     repetition_penalty=1.1,
@@ -85,3 +85,32 @@ metadata_chain = LLMChain(prompt=metadata_prompt, llm=llm)
 
 def extract_metadata(raw_text: str) -> str:
     return metadata_chain.run({"raw_text": raw_text})
+
+# ─── 7) 불일치 항목 추출용 Chain ─────────────────────────────
+compare_prompt = PromptTemplate(
+    input_variables=["registry", "building"],
+    template="""
+당신은 부동산 계약 분석 전문가입니다.
+
+[등기부등본]
+{registry}
+
+[건축물대장]
+{building}
+
+두 문서를 비교하여 다음 항목들의 불일치 여부를 판단하고, 사기 위험 요소가 있는 항목을 표 형태로 정리해주세요.
+
+항목:
+1. 소유자와 임대인 일치 여부
+2. 근저당 설정 여부 (보증금보다 높을 경우)
+3. 건축물 용도 (주거용/비주거용 여부)
+4. 구조 안전성 (오래된 건물, 철근 미사용 등)
+
+결과:
+"""
+)
+
+compare_chain = LLMChain(prompt=compare_prompt, llm=llm)
+
+def compare_documents(registry: str, building: str) -> str:
+    return compare_chain.run({"registry": registry, "building": building})

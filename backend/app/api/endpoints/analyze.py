@@ -7,7 +7,7 @@ from app.services.vector_db import store_metadata
 
 router = APIRouter()
 
-@router.post("/property/", response_model=AnalyzeResponse)
+@router.post("/analyze/", response_model=AnalyzeResponse)
 def analyze_property(data: AnalyzeRequest):
     registry_data = get_registry_info(data.address)
     building_data = get_building_info(data.address)

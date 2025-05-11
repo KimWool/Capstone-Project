@@ -54,3 +54,37 @@ def query_similar_documents(query: str, n_results: int = 5) -> list[dict]:
         {"id": iid, "metadata": meta, "distance": dist}
         for iid, meta, dist in zip(ids, metadatas, distances)
     ]
+
+# 분석 결과 (LLM 요약 + 점수) 저장용 함수
+def store_full_analysis(case_id: str, summary: str, score: dict, address: str):
+    collection.upsert(
+        documents=[summary],
+        metadatas=[{
+            "score": score["score"],
+            "grade": score["grade"],
+            "reasons": score["reasons"],
+            "address": address
+        }],
+        ids=[f"analyzed-{case_id}"]
+    )
+
+# 초기 원시 데이터를 VectorDB에 저장하는 함수
+def build_vector_docs(registry_list, building_list):
+    docs = []
+    for reg, bld in zip(registry_list, building_list):
+        case_id = reg["case_id"]
+        text = f"""
+        [등기부등본]
+        소유자: {reg['owner_name']}, 용도: {reg['building_purpose']}, 구조: {reg['building_structure']}
+        권리사항: {reg.get('rights', [])}
+
+        [건축물대장]
+        소유자: {bld['owner_name']}, 용도: {bld['building_purpose']}, 구조: {bld['building_structure']}
+        승인일: {bld['approval_date']}
+        """
+        docs.append({
+            "id": case_id,
+            "text": text,
+            "metadata": {"address": reg["address"]}
+        })
+    upsert_property_docs(docs)
