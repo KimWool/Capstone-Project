@@ -29,7 +29,7 @@ def main():
         print(summary)
 
         # 3. 점수 계산
-        score = calculate_risk(summary)
+        score = calculate_risk_score(summary)
         print("위험 점수:", score["score"], f"({score['grade']})")
         print("사유:", ", ".join(score["reasons"]))
 
