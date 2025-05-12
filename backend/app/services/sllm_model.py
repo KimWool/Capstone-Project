@@ -24,6 +24,16 @@ model_name = "beomi/KoAlpaca-llama-1-7b"
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token, use_fast=False)
 model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_token)
 
+# └── 2.5) 프롬프트 길이 초과 방지를 위한 유틸 함수
+def truncate_prompt(prompt: str, max_length: int = 512) -> str:
+    """
+    주어진 프롬프트 문자열을 tokenizer 기준 최대 토큰 수 이하로 잘라냄.
+    모델 입력 시 길이 초과로 인한 오류 또는 경고 방지를 위해 추가.
+    """
+    tokens = tokenizer(prompt, truncation=True, max_length=max_length, return_tensors="pt")
+    return tokenizer.decode(tokens["input_ids"][0], skip_special_tokens=True)
+
+
 # └── 3) 프라이프와 Chain 구성
 pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=512, temperature=0.7, do_sample=True, repetition_penalty=1.1, device=-1)
 llm = HuggingFacePipeline(pipeline=pipe)
@@ -43,7 +53,9 @@ risk_prompt = PromptTemplate(
 risk_chain =risk_prompt | llm
 
 def predict_risk(deposit: str, period: str, address: str) -> str:
-    return risk_chain.invoke({"deposit": deposit, "period": period, "address": address})
+    prompt = risk_prompt.format(deposit=deposit, period=period, address=address)
+    return llm.invoke(truncate_prompt(prompt))
+
 
 metadata_prompt = PromptTemplate(
     input_variables=["raw_text"],
@@ -60,7 +72,9 @@ metadata_prompt = PromptTemplate(
 metadata_chain = metadata_prompt | llm
 
 def extract_metadata(raw_text: str) -> str:
-    return metadata_chain.invoke({"raw_text": raw_text})
+    prompt = metadata_prompt.format(raw_text=raw_text)
+    return llm.invoke(truncate_prompt(prompt))
+
 
 compare_prompt = PromptTemplate(
     input_variables=["registry", "building"],
@@ -98,7 +112,9 @@ compare_prompt = PromptTemplate(
 compare_chain = compare_prompt | llm
 
 def compare_documents(registry: str, building: str) -> str:
-    return compare_chain.invoke({"registry": registry, "building": building})
+    prompt = compare_prompt.format(registry=registry, building=building)
+    return llm.invoke(truncate_prompt(prompt))
+
 
 def parse_summary_to_meta(summary: str) -> dict:
     meta = {}
