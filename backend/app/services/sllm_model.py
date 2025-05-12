@@ -25,7 +25,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token, use_fast=F
 model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_token)
 
 # └── 3) 프라이프와 Chain 구성
-pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=64, temperature=0.7, do_sample=True, repetition_penalty=1.1, device=-1)
+pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=512, temperature=0.7, do_sample=True, repetition_penalty=1.1, device=-1)
 llm = HuggingFacePipeline(pipeline=pipe)
 
 risk_prompt = PromptTemplate(
