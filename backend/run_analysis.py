@@ -1,6 +1,6 @@
 import json
 from app.services.sllm_model import compare_documents, parse_summary_to_meta
-from app.services.risk_score import calculate_risk
+from app.services.risk_score import calculate_risk_score
 from app.services.vector_db import store_full_analysis
 
 def load_data():
@@ -71,7 +71,7 @@ def main():
             print(f"{k}: {v}")
 
         # 5. 위험도 점수 계산
-        score = calculate_risk(meta)
+        score = calculate_risk_score(meta)
         print("\n위험도 분석 결과")
         print("=" * 40)
         print(f"위험 점수 총합: {score['score']}점")
