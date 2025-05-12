@@ -22,8 +22,16 @@ def main():
         address = reg["address"]
 
         # 1. 텍스트 요약 구성 (길이 초과 방지)
-        reg_text = f"소유자: {reg['owner_name']}, 용도: {reg['building_purpose']}, 구조: {reg['building_structure']}, 준공년도: {reg['construction_year']}"
-        bld_text = f"소유자: {bld['owner_name']}, 용도: {bld['building_purpose']}, 구조: {bld['building_structure']}, 준공년도: {bld['construction_year']}"
+        reg_text = (
+            f"소유자: {reg['owner_name']}, 용도: {reg['building_purpose']}, 구조: {reg['building_structure']}, "
+            f"준공년도: {reg['construction_year']}, 채권최고액: {reg.get('채권최고액', '없음')}, "
+            f"권리: {', '.join(reg.get('rights', [])) or '없음'}"
+        )
+
+        bld_text = (
+            f"소유자: {bld['owner_name']}, 용도: {bld['building_purpose']}, 구조: {bld['building_structure']}, "
+            f"준공년도: {bld['construction_year']}, 승인일자: {bld.get('approval_date', '없음')}"
+        )
 
         print(f"\n케이스 ID: {case_id} ({address})")
         print("🔍 LLM 비교 분석 중...")
@@ -75,7 +83,7 @@ def main():
         print("\n위험도 분석 결과")
         print("=" * 40)
         print(f"위험 점수 총합: {score['score']}점")
-        print(f"등급: {score['level']}")
+        print(f"등급: {score['grade']}")
 
         # 6. 분석 결과 벡터 DB 저장 (OpenAI API 사용 가능성 있음)
         if score:

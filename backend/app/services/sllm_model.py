@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain_community.llms import HuggingFacePipeline
+from langchain_huggingface import HuggingFacePipeline
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
@@ -40,7 +40,7 @@ risk_prompt = PromptTemplate(
 예측 결과:
 """
 )
-risk_chain = LLMChain(prompt=risk_prompt, llm=llm)
+risk_chain =risk_prompt | llm
 
 def predict_risk(deposit: str, period: str, address: str) -> str:
     return risk_chain.invoke({"deposit": deposit, "period": period, "address": address})
@@ -57,7 +57,7 @@ metadata_prompt = PromptTemplate(
 요약 결과:
 """
 )
-metadata_chain = LLMChain(prompt=metadata_prompt, llm=llm)
+metadata_chain = metadata_prompt | llm
 
 def extract_metadata(raw_text: str) -> str:
     return metadata_chain.invoke({"raw_text": raw_text})
@@ -89,9 +89,13 @@ compare_prompt = PromptTemplate(
 ------|------------|------
 소유자명 | 일치 | 동일함
 건물 용도 | 불일치 | 등기부는 "상업용", 건축물대장은 "주거용"
+
+등기부_소유자: OOO  
+건축물대장_소유자: OOO  
+...
 ..."""
 )
-compare_chain = LLMChain(prompt=compare_prompt, llm=llm)
+compare_chain = compare_prompt | llm
 
 def compare_documents(registry: str, building: str) -> str:
     return compare_chain.invoke({"registry": registry, "building": building})
@@ -114,15 +118,15 @@ def parse_summary_to_meta(summary: str) -> dict:
         "불복용도변경", "위반건축물", "건물용도"
     ]
     for key in keywords:
-        if re.search(f"{key}[:：]?\s*있음", summary):
+        if re.search(fr"{key}[:：]?\s*있음", summary):
             meta[key] = "있음"
-        elif re.search(f"{key}[:：]?\s*없음", summary):
+        elif re.search(fr"{key}[:：]?\s*없음", summary):
             meta[key] = "없음"
-        elif re.search(f"{key}[:：]?\s*중대", summary):
+        elif re.search(fr"{key}[:：]?\s*중대", summary):
             meta[key] = "중대"
-        elif re.search(f"{key}[:：]?\s*경미", summary):
+        elif re.search(fr"{key}[:：]?\s*경미", summary):
             meta[key] = "경미"
-        elif re.search(f"{key}[:：]?\s*의심됩", summary):
+        elif re.search(fr"{key}[:：]?\s*의심됩", summary):
             meta[key] = "의심됩"
     for k, p in {"채권최고액": r"채권최고액[:：]?\s*(\d+)", "기존_보증금": r"보증금[:：]?\s*(\d+)", "주택_시세": r"시세[:：]?\s*(\d+)"}.items():
         m = re.search(p, summary)

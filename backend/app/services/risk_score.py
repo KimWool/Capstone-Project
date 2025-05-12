@@ -1,4 +1,4 @@
-# app/services/risk_scorer.py
+# app/services/risk_score.py
 
 weights = {
     "소유권_문제": 0.25,

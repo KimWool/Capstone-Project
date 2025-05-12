@@ -2,14 +2,14 @@
   {
     "case_id": "data_001",
     "address": "부산광역시 금천구 서초중앙거리 (민석양윤동)",
-    "owner_name": "고예지",
+    "owner_name": "김철수",
     "building_purpose": "주거용",
     "building_structure": "철근콘크리트",
     "area_exclusive": 81.91,
     "area_shared": 16.02,
     "area_total": 97.93,
     "construction_year": 2020,
-    "rights": []
+    "rights": ["근저당권", "가압류"]
   },
   {
     "case_id": "data_002",
