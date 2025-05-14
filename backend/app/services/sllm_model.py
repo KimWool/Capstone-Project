@@ -21,7 +21,7 @@ if not hf_token:
 # └── 2) KoAlpaca 모델 로드 및 LLM 파이프라인 구성
 model_name = "beomi/KoAlpaca-llama-1-7b"
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token, use_fast=False)
-model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir="E:/huggingface_cache", token=hf_token)
+model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_token)
 pipe = pipeline(
     "text-generation",
     model=model,
@@ -183,8 +183,7 @@ def parse_summary_to_meta(summary: str) -> dict:
         "근저당권", "경매개시설정 설정 유무", "압류 설정 유무", "가압류 설정 유무",
         "가등기 설정 유무", "신탁 설정 유무", "임차권등기명령 설정 유무",
         "전세권말소청구권가등기 설정 유무", "전세권 설정 유무",
-        "위반건축물 설정 유무", "불법 용도 변경 유무", "근린생활시설 유무",
-        "건물용도", "기존_보증금", "주택_시세"
+        "위반건축물 설정 유무", "불법 용도 변경 유무", "근린생활시설 유무", "건물용도"
     ]
 
     meta = {}

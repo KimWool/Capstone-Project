@@ -47,7 +47,7 @@ def store_full_analysis(case_id: str, summary: str, score: dict, address: str):
         documents=[summary],
         metadatas=[{
             "score": score["score"],
-            "level": score["level"],
+            "grade": score["grade"],
             "reasons": ", ".join(score.get("reasons", [])) if isinstance(score.get("reasons"), list) else "",
             "address": address
         }],

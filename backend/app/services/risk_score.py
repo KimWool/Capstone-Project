@@ -43,7 +43,21 @@ def calculate_risk_score(findings: dict) -> dict:
     # 3. 근저당권 설정 위험 (단일 항목이면서 실질 위험도 높음)
     pledge = findings.get("채권최고액", 0)
     price = findings.get("주택_시세", 1)
+
+    try:
+        pledge = int(pledge)
+    except (ValueError, TypeError):
+        pledge = 0
+
+    try:
+        price = int(price)
+        if price <= 0:
+            price = 1  # 0 또는 음수 방지
+    except (ValueError, TypeError):
+        price = 1
+
     pledge_ratio = (pledge / price) * 100
+
     if pledge_ratio >= 60:
         score += weights["근저당권"] * 100
         reasons.append("근저당이 시세 대비 과다")
@@ -56,6 +70,11 @@ def calculate_risk_score(findings: dict) -> dict:
 
     # 4. 깡통주택 위험도 (단일 항목이면서 높지만 근저당보다 변동성이 큼)
     deposit = findings.get("기존_보증금", 0)
+    try:
+        deposit = int(deposit)
+    except (ValueError, TypeError):
+        deposit = 0
+
     margin_ratio = ((pledge + deposit) / price) * 100
     if price <= 0:
         price = 1; # ZeroDivisionError 방지
