@@ -1,16 +1,16 @@
 from fastapi import APIRouter
 from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse
 from app.clients.registry_api import get_registry_info
-from app.clients.building_api import get_building_info
+from app.clients.building_api import get_building_title_info
 from app.services.sllm_model import extract_metadata
-from app.services.vector_db import store_metadata
+#from app.services.vector_db import store_metadata
 
 router = APIRouter()
 
 @router.post("/analyze/", response_model=AnalyzeResponse)
 def analyze_property(data: AnalyzeRequest):
     registry_data = get_registry_info(data.address)
-    building_data = get_building_info(data.address)
+    building_data = get_building_title_info(data.address)
 
     raw_text = f"""
     [등기부등본]
@@ -25,6 +25,6 @@ def analyze_property(data: AnalyzeRequest):
     """
 
     summary = extract_metadata(raw_text)
-    store_metadata(data.address, summary)
+    #store_metadata(data.address, summary)
 
     return AnalyzeResponse(address=data.address, summary=summary)

@@ -156,7 +156,20 @@ def compare_documents(registry: str, building: str) -> str:
         f"등기부_소유자: {reg.get('소유자명') or '미상'}",
         f"건축물대장_소유자: {bld.get('소유자명') or '미상'}",
         "계약_임대인: 미상",
-        f"채권최고액: {reg.get('근저당 설정 유무') or 0}"
+        f"채권최고액: {reg.get('근저당 설정 유무') or 0}",
+        f"근저당권: {reg.get('근저당권') or '없음'}",
+        f"경매개시설정 설정 유무: {reg.get('경매개시결정') or '없음'}",
+        f"압류 설정 유무: {reg.get('압류') or '없음'}",
+        f"가압류 설정 유무: {reg.get('가압류') or '없음'}",
+        f"가등기 설정 유무: {reg.get('가등기') or '없음'}",
+        f"신탁 설정 유무: {reg.get('신탁') or '없음'}",
+        f"임차권등기명령 설정 유무: {reg.get('임차권등기명령') or '없음'}",
+        f"전세권말소청구권가등기 설정 유무: {reg.get('전세권말소청구권가등기') or '없음'}",
+        f"전세권 설정 유무: {reg.get('전세권') or '없음'}",
+        f"위반건축물 설정 유무: {bld.get('위반건축물') or '없음'}",
+        f"불법 용도 변경 유무: {bld.get('불법용도변경') or '없음'}",
+        f"근린생활시설 유무: {bld.get('근린생활시설') or '없음'}",
+        f"건물용도: {bld.get('건물 용도') or '없음'}",
     ]
     return table + "\n\n" + "\n".join(meta_lines)
 
@@ -165,8 +178,24 @@ def parse_summary_to_meta(summary: str) -> dict:
     """
     compare_documents 출력의 메타데이터 부분을 파싱해 dict으로 반환
     """
+    keys = [
+        "등기부_소유자", "건축물대장_소유자", "계약_임대인", "채권최고액",
+        "근저당권", "경매개시설정 설정 유무", "압류 설정 유무", "가압류 설정 유무",
+        "가등기 설정 유무", "신탁 설정 유무", "임차권등기명령 설정 유무",
+        "전세권말소청구권가등기 설정 유무", "전세권 설정 유무",
+        "위반건축물 설정 유무", "불법 용도 변경 유무", "근린생활시설 유무", "건물용도"
+    ]
+
     meta = {}
-    for key in ["등기부_소유자", "건축물대장_소유자", "계약_임대인", "채권최고액"]:
+    for key in keys:
         m = re.search(fr"{key}[:：]?\s*(\S+)", summary)
         meta[key] = m.group(1) if m else None
+
+    # 수치 변환
+    for num_key in ["채권최고액", "기존_보증금", "주택_시세"]:
+        try:
+            meta[num_key] = int(meta.get(num_key, 0))
+        except ValueError:
+            meta[num_key] = 0
+
     return meta
