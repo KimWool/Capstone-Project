@@ -1,12 +1,11 @@
-# app/services/sllm_model.py
 import os
 import re
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_huggingface import HuggingFacePipeline
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 
 # └── 1) .env 설정 로드
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,25 +18,23 @@ hf_token = os.getenv("HF_TOKEN")
 if not hf_token:
     raise ValueError("HF_TOKEN이 로드되지 않았습니다")
 
-# └── 2) KoAlpaca 모델 로드
+# └── 2) KoAlpaca 모델 로드 및 LLM 파이프라인 구성
 model_name = "beomi/KoAlpaca-llama-1-7b"
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token, use_fast=False)
 model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_token)
-
-# └── 2.5) 프롬프트 길이 초과 방지를 위한 유틸 함수
-def truncate_prompt(prompt: str, max_length: int = 512) -> str:
-    """
-    주어진 프롬프트 문자열을 tokenizer 기준 최대 토큰 수 이하로 잘라냄.
-    모델 입력 시 길이 초과로 인한 오류 또는 경고 방지를 위해 추가.
-    """
-    tokens = tokenizer(prompt, truncation=True, max_length=max_length, return_tensors="pt")
-    return tokenizer.decode(tokens["input_ids"][0], skip_special_tokens=True)
-
-
-# └── 3) 프라이프와 Chain 구성
-pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=512, temperature=0.7, do_sample=True, repetition_penalty=1.1, device=-1)
+pipe = pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    max_new_tokens=64,
+    temperature=0.7,
+    do_sample=True,
+    repetition_penalty=1.1,
+    device=-1
+)
 llm = HuggingFacePipeline(pipeline=pipe)
 
+# └── 3) 전세계약 위험도 예측
 risk_prompt = PromptTemplate(
     input_variables=["deposit", "period", "address"],
     template="""
@@ -50,13 +47,13 @@ risk_prompt = PromptTemplate(
 예측 결과:
 """
 )
-risk_chain =risk_prompt | llm
+risk_chain = risk_prompt | llm
 
 def predict_risk(deposit: str, period: str, address: str) -> str:
     prompt = risk_prompt.format(deposit=deposit, period=period, address=address)
-    return llm.invoke(truncate_prompt(prompt))
+    return llm.invoke(prompt)
 
-
+# └── 4) 메타데이터 요약
 metadata_prompt = PromptTemplate(
     input_variables=["raw_text"],
     template="""
@@ -73,97 +70,103 @@ metadata_chain = metadata_prompt | llm
 
 def extract_metadata(raw_text: str) -> str:
     prompt = metadata_prompt.format(raw_text=raw_text)
-    return llm.invoke(truncate_prompt(prompt))
+    return llm.invoke(prompt)
 
+# └── 5) 정규식 기반 필드 추출
 
-compare_prompt = PromptTemplate(
-    input_variables=["registry", "building"],
-    template="""
-당신은 부동산 계약 방문 전문가입니다.
+def extract_fields(text: str) -> dict:
+    """
+    등기부등본/건축물대장 텍스트에서 주요 필드를 뽑아 dict으로 반환
+    """
+    patterns = {
+        "소유자명":        r"소유자[:：]?\s*([^,]+)",
+        "건물 용도":      r"용도[:：]?\s*([^,]+)",
+        "구조 유형":      r"구조[:：]?\s*([^,]+)",
+        "전용면적":       r"전용면적[:：]?\s*([^,]+)",
+        "공유면적":       r"공유면적[:：]?\s*([^,]+)",
+        "연면적":         r"연면적[:：]?\s*([^,]+)",
+        "준공년도":       r"준공년도[:：]?\s*([^,]+)",
+        "근저당 설정 유무": r"채권최고액[:：]?(\d+|없음)"
+    }
+    fields = {}
+    for name, pat in patterns.items():
+        m = re.search(pat, text)
+        fields[name] = m.group(1).strip() if m else None
+    return fields
 
-[등기부등본]
-{registry}
+# └── 6) LLM 판정을 이용한 하이브리드 비교
 
-[건축물대장]
-{building}
+def compare_documents_llm_decision(registry: str, building: str) -> dict:
+    """
+    LLM에게 few-shot + temperature=0 으로 일치/불일치 판정만 JSON으로 요청
+    """
+    reg = extract_fields(registry)
+    bld = extract_fields(building)
+    items = ["소유자명","건물 용도","구조 유형","전용면적","공유면적","연면적","준공년도","근저당 설정 유무"]
 
-아래 항목들과 같이 두 문서를 비교하여 불일치 유무를 확인하고, 불일치 시 이유를 설명해주세요:
+    # few-shot prompt
+    prompt = (
+        "다음은 등기부(reg)와 건축물대장(bld)에서 추출된 필드 값입니다.\n"
+        "문자열을 정확히 비교하여, 같으면 \"일치\", 다르면 \"불일치\"로 JSON으로 반환하세요.\n"
+        "예시: { \"소유자명\": \"불일치\", \"전용면적\": \"일치\" }\n\n값:\n"
+    )
+    for key in items:
+        prompt += f"{key}: reg='{reg.get(key) or ''}', bld='{bld.get(key) or ''}'\n"
+    prompt += "\n결과:"
 
-1. 소유자명
-2. 건물 용도
-3. 구조 유형
-4. 전용면적
-5. 공유면적
-6. 연면적
-7. 준공년도
-8. 근저당 설정 유무
+    # 온도 0으로 호출
+    resp = llm.invoke(prompt, params={"temperature":0, "max_new_tokens":128})
+    text = resp if isinstance(resp, str) else resp.get("text", "")
+    # JSON 파싱
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        decision = {}
+        for key in items:
+            m = re.search(fr'"{key}"\s*:\s*"(일치|불일치)"', text)
+            decision[key] = m.group(1) if m else "불일치"
+        return decision
 
-결과를 표 형식으로 제공하세요. 예시:
-항목 | 일치 유무 | 설명
-------|------------|------
-소유자명 | 일치 | 동일함
-건물 용도 | 불일치 | 등기부는 "상업용", 건축물대장은 "주거용"
-
-또한, 아래 정보를 별도로 정리하여 출력하세요:
-
-- 등기부_소유자: [등기부 상 소유자 이름]
-- 건축물대장_소유자: [건축물대장 상 소유자 이름]
-- 계약_임대인: [계약서 상 임대인 이름] (없으면 "미상"으로 표기)
-- 채권최고액: [숫자만 기입, 없으면 0, 예: 130000000]
-- 전세권_다수: 있음/없음
-- 보증금_장기미반환: 있음/없음
-- 전세권말소청구권가등기: 있음/없음
-- 이전세입자_전세권: 있음/없음
-- 임차권등기명령: 있음/없음
-- 경매개시결정: 있음/없음
-- 압류: 있음/없음
-- 가압류: 있음/없음
-- 가등기: 있음/없음
-- 신탁: 있음/없음
-- 위반건축물: 중대/경미/없음
-- 불법용도변경: 의심됨/없음
-- 건물용도: 주거/비주거
-
-※ 출력은 사람이 읽기 쉬우면서도, 위 항목명은 정확히 표기해주세요. (예: '건물용도: 주거')
-"""
-)
-compare_chain = compare_prompt | llm
 
 def compare_documents(registry: str, building: str) -> str:
-    prompt = compare_prompt.format(registry=registry, building=building)
-    return llm.invoke(truncate_prompt(prompt))
+    """
+    Hybrid: LLM이 판정, Python이 설명+표 포맷팅
+    """
+    reg = extract_fields(registry)
+    bld = extract_fields(building)
+    decision = compare_documents_llm_decision(registry, building)
+
+    header = [
+        "항목 | 일치 유무 | 설명",
+        "------|------------|------"
+    ]
+    rows = []
+    for key in ["소유자명","건물 용도","구조 유형","전용면적","공유면적","연면적","준공년도","근저당 설정 유무"]:
+        flag = decision.get(key, "불일치")
+        if flag == "일치":
+            desc = "동일함"
+        else:
+            rv = reg.get(key) or "없음"
+            bv = bld.get(key) or "없음"
+            desc = f'등기부는 "{rv}", 건축물대장은 "{bv}"'
+        rows.append(f"{key} | {flag} | {desc}")
+
+    table = "\n".join(header + rows)
+    meta_lines = [
+        f"등기부_소유자: {reg.get('소유자명') or '미상'}",
+        f"건축물대장_소유자: {bld.get('소유자명') or '미상'}",
+        "계약_임대인: 미상",
+        f"채권최고액: {reg.get('근저당 설정 유무') or 0}"
+    ]
+    return table + "\n\n" + "\n".join(meta_lines)
 
 
 def parse_summary_to_meta(summary: str) -> dict:
+    """
+    compare_documents 출력의 메타데이터 부분을 파싱해 dict으로 반환
+    """
     meta = {}
-    meta["등기부_소유자"] = re.search(r"등기부\s*소유자[:：]?\s*(\S+)", summary)
-    meta["건축물대장_소유자"] = re.search(r"건축물대장\s*소유자[:：]?\s*(\S+)", summary)
-    meta["계약_임대인"] = re.search(r"계약\s*임대인[:：]?\s*(\S+)", summary)
-
-    for k in list(meta):
-        if isinstance(meta[k], re.Match):
-            meta[k] = meta[k].group(1)
-        else:
-            meta[k] = None
-    keywords = [
-        "경매가시결정", "압류", "가압류", "가등기", "신택",
-        "전세권_다수", "보증금_장기미반환", "전세권말소청권가등기",
-        "임찰권등기명령", "이전세입자_전세권", "정상_전세권",
-        "불복용도변경", "위반건축물", "건물용도"
-    ]
-    for key in keywords:
-        if re.search(fr"{key}[:：]?\s*있음", summary):
-            meta[key] = "있음"
-        elif re.search(fr"{key}[:：]?\s*없음", summary):
-            meta[key] = "없음"
-        elif re.search(fr"{key}[:：]?\s*중대", summary):
-            meta[key] = "중대"
-        elif re.search(fr"{key}[:：]?\s*경미", summary):
-            meta[key] = "경미"
-        elif re.search(fr"{key}[:：]?\s*의심됩", summary):
-            meta[key] = "의심됩"
-    for k, p in {"채권최고액": r"채권최고액[:：]?\s*(\d+)", "기존_보증금": r"보증금[:：]?\s*(\d+)", "주택_시세": r"시세[:：]?\s*(\d+)"}.items():
-        m = re.search(p, summary)
-        if m:
-            meta[k] = int(m.group(1))
+    for key in ["등기부_소유자", "건축물대장_소유자", "계약_임대인", "채권최고액"]:
+        m = re.search(fr"{key}[:：]?\s*(\S+)", summary)
+        meta[key] = m.group(1) if m else None
     return meta
