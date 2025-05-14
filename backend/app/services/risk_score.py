@@ -30,13 +30,13 @@ def calculate_risk_score(findings: dict) -> dict:
         reasons.append("소유권 침해 요소 있음")
 
     # 2. 기존 전세권 및 임차권 위험(복합적인 요인, 실제 위험 낮음)
-    if findings.get("임차권등기명령") == "있음":
+    if findings.get("임차권등기명령"):
         score += weights["임차권등기명령"] * 100
         reasons.append("임차권 등기명령 존재")
-    if findings.get("전세권_다수") == "있음" or findings.get("보증금_장기미반환") == "있음":
-        score += weights["전세권설정"] * 80
-        reasons.append("전세권 다수/보증금 미반환")
-    elif findings.get("전세권말소청구권가등기") == "있음" or findings.get("이전세입자_전세권") == "있음":
+    if check_defaulter(findings.get("계약_임대인")):
+        score += weights["전세권설정"] * 100
+        reasons.append("상습 채무불이행자 공개 내역에 포함됨")
+    elif findings.get("전세권말소청구권가등기") or findings.get("전세권"):
         score += weights["전세권설정"] * 60
         reasons.append("이전 전세권 관련 문제")
 
@@ -67,12 +67,15 @@ def calculate_risk_score(findings: dict) -> dict:
         reasons.append("깡통 위험 있음")
 
     # 5. 건축물 적법성/용도
-    if findings.get("위반건축물") == "중대":
+    if findings.get("위반건축물"):
         score += weights["위반건축물"] * 100
         reasons.append("위반건축물 중대")
-    if findings.get("불법용도변경") == "의심됨" or findings.get("건물용도") == "비주거":
+    if findings.get("불법용도변경") or findings.get("건물용도") != "주거용":
         score += weights["불법용도"] * 100
         reasons.append("불법용도 또는 비주거 건물")
+    elif findings.get("근린생활시설"):
+        score += weights["불법용도"] * 100
+        reasons.append("불법개조 의심됨")
 
     # 점수 등급
     HIGH_RISK = 70
@@ -93,3 +96,45 @@ def calculate_risk_score(findings: dict) -> dict:
         "grade": grade,
         "reasons": reasons
     }
+
+import requests
+from bs4 import BeautifulSoup
+# 상습 채무불이행자 명단 조회
+def check_defaulter(name_to_check):
+    base_url = "https://www.molit.go.kr/USR/WPGE0201/m_37180/DTL.jsp"
+    found = False
+    page = 1
+
+    while True:
+        params = {'page': page}
+        response = requests.get(base_url, params=params)
+        if response.status_code != 200:
+            print(f"페이지 {page}를 불러오는 데 실패했습니다.")
+            break
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        table = soup.find('table')
+        if not table:
+            print("명단 테이블을 찾을 수 없습니다.")
+            break
+
+        rows = table.find_all('tr')[1:]  # 헤더를 제외한 행들
+
+        if not rows:
+            break  # 더 이상 데이터가 없으면 종료
+
+        for row in rows:
+            cols = row.find_all('td')
+            if cols:
+                name = cols[0].get_text(strip=True)
+                if name == name_to_check:
+                    print(f"'{name_to_check}'님은 상습 채무불이행자 명단에 포함되어 있습니다.")
+                    found = True
+                    break
+
+        if found:
+            break
+        page += 1
+
+    if not found:
+        print(f"'{name_to_check}'는 명단에 포함되어 있지 않습니다.")
