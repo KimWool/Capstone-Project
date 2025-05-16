@@ -1,5 +1,7 @@
+# backend/run_analysis.py
 import json
-from app.services.sllm_model import compare_documents, parse_summary_to_meta
+from pathlib import Path
+from app.services.sllm_model import extract_fields, get_match_flags, generate_explanations, compile_report
 from app.services.risk_score import calculate_risk_score
 from app.services.vector_db import store_full_analysis
 
@@ -40,32 +42,41 @@ def main():
             f"준공년도: {bld['construction_year']}, 승인일자: {bld.get('approval_date', '없음')}"
         )
 
-        # 3) 하이브리드 비교 호출
-        summary_text = compare_documents(reg_text, bld_text)
+        # 3) 필드 추출 및 일치/불일치 플래그
+        reg_fields = extract_fields(reg_text)
+        bld_fields = extract_fields(bld_text)
+        flags = get_match_flags(reg_fields, bld_fields)
 
-        # 4) 결과 출력
+        # 4) KoAlpaca로 설명 생성
+        explanations = generate_explanations(flags, reg_fields, bld_fields)
+
+        # 5) 비교 테이블 출력
         print("\n비교 요약 결과 (표):")
-        print(summary_text)
+        print("항목           | 일치 유무 | 설명")
+        print("--------------|----------|----------------")
+        for k in flags:
+            print(f"{k:<14} | {flags[k]:<8} | {explanations.get(k, '')}")
 
-        # 5) 메타데이터 추출
-        meta = parse_summary_to_meta(summary_text)
-        print("\n메타데이터 추출 결과:")
-        for k, v in meta.items():
-            print(f"{k}: {v}")
+        # 6) GPT-4로 최종 보고서
+        report = compile_report(case_id, address, flags, explanations)
+        print("\n=== 최종 보고서 ===\n", report)
 
-        # 6) 위험도 점수 계산
+        # 7) 메타데이터 & 위험도 분석
+        meta = {
+            "등기부_소유자": reg_fields.get("소유자명"),
+            "건축물대장_소유자": bld_fields.get("소유자명")
+        }
         score = calculate_risk_score(meta)
         print("\n위험도 분석 결과")
         print("=" * 40)
         print(f"위험 점수 총합: {score['score']}점")
         print(f"등급: {score['grade']}")
 
-        # 7) 벡터 DB 저장
+        # 8) 분석 결과 저장
         try:
-            store_full_analysis(case_id, summary_text, score, address)
+            store_full_analysis(case_id, report, score, address)
         except Exception as e:
             print(f"저장 실패: {e}")
-
 
 if __name__ == "__main__":
     main()

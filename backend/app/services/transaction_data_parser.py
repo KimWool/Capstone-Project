@@ -1,3 +1,4 @@
+# backend/app/services/transaction_data_parser.py
 import PublicDataReader as pdr
 import xml.etree.ElementTree as ET
 import json
@@ -72,7 +73,7 @@ def parse_real_estate_xml(xml_str: str, house_type: str):
   return grouped_data
 
 import asyncio
-from backend.app.clients.transaction_price_api import fetch_transaction_price_data
+from app.clients.transaction_price_api import fetch_transaction_price_data
 from app.schemas.transaction_price import AptTransactionPrice, OffiTransactionPrice, RhTransactionPrice, ShTransactionPrice
 import xmltodict
 import pprint
