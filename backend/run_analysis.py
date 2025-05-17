@@ -30,11 +30,35 @@ def main():
         print("🔍 문서 비교 분석 중...")
 
         # 2) 비교용 텍스트 구성
+
+        # 위험 권리 유형 리스트
+        risk_types = {"경매개시결정", "압류", "가압류", "가등기", "신탁", "전세권", "임차권"}
+
+        rights_raw = reg.get("rights", [])
+        if isinstance(rights_raw, list):
+            if rights_raw and isinstance(rights_raw[0], dict):
+                filtered = [r.get("type", "알수없음") for r in rights_raw if r.get("type") in risk_types]
+                rights_str = ", ".join(filtered) if filtered else "없음"
+            elif rights_raw and isinstance(rights_raw[0], str):
+                filtered = [r for r in rights_raw if r in risk_types]
+                rights_str = ", ".join(filtered) if filtered else "없음"
+            else:
+                rights_str = "없음"
+        else:
+            rights_str = "없음"
+
+        amount = 0
+        for r in reg.get("rights", []):
+            if r["type"] == "근저당권":
+                amount = r["amount"]
+                break
+        amount_str = f"{amount}" if amount > 0 else "없음"
+
         reg_text = (
             f"소유자: {reg['owner_name']}, 용도: {reg['building_purpose']}, 구조: {reg['building_structure']}, "
             f"전용면적: {reg['area_exclusive']}㎡, 공유면적: {reg['area_shared']}㎡, 연면적: {reg['area_total']}㎡, "
-            f"준공년도: {reg['construction_year']}, 채권최고액: {reg.get('채권최고액', '없음')}, "
-            f"권리: {', '.join(reg.get('rights', [])) or '없음'}"
+            f"준공년도: {reg['construction_year']}, 채권최고액: {amount_str}"
+            f"권리: {rights_str}"
         )
         bld_text = (
             f"소유자: {bld['owner_name']}, 용도: {bld['building_purpose']}, 구조: {bld['building_structure']}, "
@@ -58,25 +82,29 @@ def main():
             print(f"{k:<14} | {flags[k]:<8} | {explanations.get(k, '')}")
 
         # 6) GPT-4로 최종 보고서
-        report = compile_report(case_id, address, flags, explanations)
-        print("\n=== 최종 보고서 ===\n", report)
+        #report = compile_report(case_id, address, flags, explanations)
+        #print("\n=== 최종 보고서 ===\n", report)
 
         # 7) 메타데이터 & 위험도 분석
         meta = {
             "등기부_소유자": reg_fields.get("소유자명"),
-            "건축물대장_소유자": bld_fields.get("소유자명")
+            "건축물대장_소유자": bld_fields.get("소유자명"),
+            "채권최고액": reg.get("채권최고액"),
+            "위험_권리_목록": reg_fields.get("위험 권리 목록", []),
+            "건물 용도": reg_fields.get("건물 용도")
         }
         score = calculate_risk_score(meta)
         print("\n위험도 분석 결과")
         print("=" * 40)
         print(f"위험 점수 총합: {score['score']}점")
+        print(f"위험도 원인: {score['reasons']}")
         print(f"등급: {score['grade']}")
 
         # 8) 분석 결과 저장
-        try:
+        """try:
             store_full_analysis(case_id, report, score, address)
         except Exception as e:
-            print(f"저장 실패: {e}")
+            print(f"저장 실패: {e}")"""
 
 if __name__ == "__main__":
     main()

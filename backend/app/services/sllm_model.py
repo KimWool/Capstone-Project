@@ -27,7 +27,7 @@ if not hf_token:
     raise ValueError("HF_TOKEN이 로드되지 않았습니다")
 model_name = "beomi/KoAlpaca-llama-1-7b"
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token, use_fast=False)
-model = AutoModelForCausalLM.from_pretrained(model_name, token=hf_token)
+model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir="E:/huggingface_cache", token=hf_token)
 pipe = pipeline(
     "text-generation",
     model=model,
@@ -43,7 +43,7 @@ llm = HuggingFacePipeline(pipeline=pipe)
 # ── 3) OpenAI GPT-4 설정
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-     raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다")
+    raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다")
 openai_client = OpenAI(api_key=api_key)
 
 # ── 4) 필드 추출 정규표현식
@@ -55,14 +55,26 @@ patterns = {
     "공유면적":       r"공유면적[:：]?\s*([^,]+)",
     "연면적":         r"연면적[:：]?\s*([^,]+)",
     "준공년도":       r"준공년도[:：]?\s*([^,]+)",
-    "근저당 설정 유무": r"채권최고액[:：]?(\d+|없음)"
+    "근저당 설정 유무": r"채권최고액[:：]?(\d+|없음)",
+    "위험 권리 존재 여부": r"권리[:：]?\s*([^,]+)"
 }
 
 def extract_fields(text: str) -> dict:
     fields = {}
+    risk_types = {"경매개시결정", "압류", "가압류", "가등기", "신탁", "전세권", "임차권"}
     for name, pat in patterns.items():
         m = re.search(pat, text)
-        fields[name] = m.group(1).strip() if m else None
+        value = m.group(1).strip() if m else None
+        if name == "위험 권리 존재 여부":
+            if value:
+                rights = [s.strip() for s in re.split(r"[,\s]+", value)]
+                filtered = [r for r in rights if r in risk_types]
+                fields["위험 권리 목록"] = filtered
+            else:
+                fields["위험 권리 목록"] = []
+        elif value is not None:
+            fields[name] = value
+
     return fields
 
 # ── 5) Python으로 일치/불일치 판정
@@ -71,6 +83,8 @@ from typing import Dict
 def get_match_flags(reg: dict, bld: dict) -> Dict[str, str]:
     flags = {}
     for k in patterns.keys():
+        if k == "위험 권리 존재 여부":
+            continue
         rv = reg.get(k) or ""
         bv = bld.get(k) or ""
         flags[k] = "일치" if rv == bv else "불일치"
@@ -81,6 +95,8 @@ def get_match_flags(reg: dict, bld: dict) -> Dict[str, str]:
 def generate_explanations(flags: Dict[str, str], reg: dict, bld: dict) -> Dict[str, str]:
     lines = []
     for k, flag in flags.items():
+        if k == "위험 권리 존재 여부":
+            continue
         rv = reg.get(k) or "없음"
         bv = bld.get(k) or "없음"
         lines.append(f"{k}: flag={flag}, reg='{rv}', bld='{bv}'")

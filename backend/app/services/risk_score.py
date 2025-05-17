@@ -17,6 +17,7 @@ weights = {
 def calculate_risk_score(findings: dict) -> dict:
     score = 0
     reasons = []
+    #print("🔎 전달된 findings:", findings)
 
     # 1. 소유권 관련 위험
     if findings.get("건축물대장_소유자") != findings.get("등기부_소유자"):
@@ -30,13 +31,14 @@ def calculate_risk_score(findings: dict) -> dict:
         reasons.append("소유권 침해 요소 있음")
 
     # 2. 기존 전세권 및 임차권 위험(복합적인 요인, 실제 위험 낮음)
-    if findings.get("임차권등기명령"):
+    if findings.get("임차권"):
         score += weights["임차권등기명령"] * 100
         reasons.append("임차권 등기명령 존재")
-    if check_defaulter(findings.get("계약_임대인")):
+    owner_name = findings.get("등기부_소유자", "").strip()
+    if check_defaulter(owner_name):
         score += weights["전세권설정"] * 100
         reasons.append("상습 채무불이행자 공개 내역에 포함됨")
-    elif findings.get("전세권말소청구권가등기") or findings.get("전세권"):
+    elif findings.get("전세권"):
         score += weights["전세권설정"] * 60
         reasons.append("이전 전세권 관련 문제")
 
@@ -89,7 +91,7 @@ def calculate_risk_score(findings: dict) -> dict:
     if findings.get("위반건축물"):
         score += weights["위반건축물"] * 100
         reasons.append("위반건축물 중대")
-    if findings.get("불법용도변경") or findings.get("건물용도") != "주거용":
+    if findings.get("불법용도변경") or findings.get("건물 용도") != "주거용":
         score += weights["불법용도"] * 100
         reasons.append("불법용도 또는 비주거 건물")
     elif findings.get("근린생활시설"):
@@ -157,3 +159,6 @@ def check_defaulter(name_to_check):
 
     if not found:
         print(f"'{name_to_check}'는 명단에 포함되어 있지 않습니다.")
+        return False
+
+    return found;

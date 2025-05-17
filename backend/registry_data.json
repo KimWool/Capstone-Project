@@ -9,7 +9,8 @@
     "area_shared": 16.02,
     "area_total": 97.93,
     "construction_year": 2020,
-    "rights": ["가압류"]
+    "rights": [
+      {"type": "가압류"}]
   },
   {
     "case_id": "data_002",
