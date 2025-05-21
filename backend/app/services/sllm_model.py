@@ -87,23 +87,37 @@ def compare_flags_gpt4(reg: dict, bld: dict) -> Dict[str, str]:
 [건축물대장]
 {json.dumps(bld, ensure_ascii=False, indent=2)}
 
-아래 필드에 대해, 값이 동일하면 "일치", 다르면 "불일치"라는 flag만 JSON으로 출력해주세요.
+다음 형식을 그대로 유지하여, JSON만 응답하세요. 설명이나 문장은 포함하지 마세요.
+반드시 아래 예시처럼 응답하세요:
+{{
+  "소유자명": "불일치",
+  "건물 용도": "일치"
+}}
 
 필드 목록: {', '.join(patterns.keys())}
 
 출력 예시:
 {{
   "소유자명": "불일치",
-  "건물 용도": "일치",
-  …
+  "건물 용도": "일치"
 }}
 """
     resp = openai_client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role":"user", "content":prompt}],
+        messages=[{"role": "user", "content": prompt}],
         temperature=0
     )
-    return json.loads(resp.choices[0].message.content)
+
+    content = resp.choices[0].message.content.strip()
+    
+    if not content:
+        raise ValueError("❌ GPT 응답이 비어 있습니다.")
+
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        print("❌ GPT 응답이 JSON이 아님:", content)
+        raise
 
 # ── 7) KoAlpaca로 설명 생성 (기존 코드 재사용)
 def generate_explanations(flags: Dict[str, str], reg: dict, bld: dict) -> Dict[str, str]:
