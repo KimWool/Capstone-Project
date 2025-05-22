@@ -25,8 +25,19 @@ hf_token = os.getenv("HF_TOKEN")
 if not hf_token:
     raise ValueError("HF_TOKEN이 로드되지 않았습니다")
 model_name = "beomi/KoAlpaca-llama-1-7b"
-tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token, use_fast=False)
-model = AutoModelForCausalLM.from_pretrained(model_name, use_auth_token=hf_token)
+tokenizer = AutoTokenizer.from_pretrained(
+    model_name,
+    token=hf_token,
+    use_fast=False,
+    cache_dir="/mnt/model_cache"
+)
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    token=hf_token,
+    cache_dir="/mnt/model_cache"
+)
+
 pipe = pipeline(
     "text-generation",
     model=model,
