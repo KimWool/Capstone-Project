@@ -80,6 +80,7 @@ flutter:
     - assets/Money.png
     - assets/Document.png
     - assets/ajaping_icon.png
+    - assets/html/postcode.html
 
   # To add assets to your application, add an assets section, like this:
   # assets:
