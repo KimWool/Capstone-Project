@@ -152,55 +152,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // 나머지 SNS 로그인 버튼들 (생략 가능)
-          Positioned(
-            top: 481,
-            left: 46,
-            child: Container(
-              width: 156,
-              height: 42,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/naver_logo1.png'),
-                  fit: BoxFit.fitWidth,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 481,
-            left: 202,
-            child: Container(
-              width: 156,
-              height: 42,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(3),
-                color: const Color(0xFFFDDC3F),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 481,
-            left: 217,
-            child: Container(
-              width: 41,
-              height: 41,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/kakao_logo.png'),
-                  fit: BoxFit.fitWidth,
-                ),
-              ),
-            ),
-          ),
-          const Positioned(
-            top: 493,
-            left: 258,
-            child: Text(
-              '카카오 로그인',
-              style: TextStyle(fontSize: 13, color: Color(0xFF3A2929)),
-            ),
-          ),
+
         ],
       ),
     );

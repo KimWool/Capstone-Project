@@ -95,17 +95,7 @@ class MainPage extends StatelessWidget {
                     isIconLeft: true,
                     iconAlignment: MainAxisAlignment.start,
                   ),
-                  const SizedBox(width: 20),
-                  _smallCard(
-                    title: '계약 단계별 정보',
-                    iconPath: 'assets/Chart.png',
-                    onTap: () {
-                      Navigator.pushNamed(context, '/contract_info_step');
-                    },
-                    titleAlignment: MainAxisAlignment.start,
-                    isIconLeft: false,
-                    iconAlignment: MainAxisAlignment.end,
-                  ),
+
                 ],
               ),
 
