@@ -85,7 +85,7 @@ def calculate_risk_score(findings: dict) -> dict:
         score = apply_risk(score, reasons, severities, "근저당권", 0.3, "근저당 있음")
 
     # 4. 깡통주택 위험도 (단일 항목이면서 높지만 근저당보다 변동성이 큼)
-    deposit = int(findings.get("기존_보증금", 0) or 0)
+    deposit = int(findings.get("계약_보증금", 0) or 0)
     margin_ratio = safe_divide(pledge + deposit, price) * 100
 
     if margin_ratio >= 90:

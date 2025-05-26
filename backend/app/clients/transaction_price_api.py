@@ -93,9 +93,15 @@ async def fetch_transaction_price_data(region_code: str, deal_ym: str, property_
   try:
     data = xmltodict.parse(resp.text)
     body = data.get("response", {}).get("body", {})
-    items = body.get("items", {}).get("item")
 
+    total_count = int(body.get("totalCount", 0))
+    if total_count == 0:
+      logger.info("해당 조건에 대한 실거래 데이터가 없습니다.")
+      return []
+
+    items = body.get("items", {}).get("item")
     if not items:
+      logger.info("items 항목이 비어 있거나 존재하지 않습니다.")
       return []
 
     # 단일 item일 경우 리스트로 변환
@@ -103,16 +109,17 @@ async def fetch_transaction_price_data(region_code: str, deal_ym: str, property_
       items = [items]
 
     # 항목에 따라 적절한 모델로 변환
-    if property_type == "apt":
-      return [AptTransactionPrice(**item) for item in items]
-    elif property_type == "offi":
-      return [OffiTransactionPrice(**item) for item in items]
-    elif property_type == "rh":
-      return [RhTransactionPrice(**item) for item in items]
-    elif property_type == "sh":
-      return [ShTransactionPrice(**item) for item in items]
-    else:
+    model_map = {
+      "apt": AptTransactionPrice,
+      "offi": OffiTransactionPrice,
+      "rh": RhTransactionPrice,
+      "sh": ShTransactionPrice,
+    }
+    ModelClass = model_map.get(property_type)
+    if not ModelClass:
       raise ValueError(f"지원하지 않는 유형입니다: {property_type}")
+
+    return [ModelClass(**item) for item in items]
 
   except Exception as e:
     logger.error(f"XML 파싱 또는 변환 실패: {e}")

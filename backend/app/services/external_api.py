@@ -13,9 +13,11 @@ APT_TRANSACTION_PRICE_URL = os.getenv("APT_TRANSACTION_PRICE_URL")
 OFFI_TRANSACTION_PRICE_URL = os.getenv("OFFI_TRANSACTION_PRICE_URL")
 RH_TRANSACTION_PRICE_URL = os.getenv("RH_TRANSACTION_PRICE_URL")
 SH_TRANSACTION_PRICE_URL = os.getenv("SH_TRANSACTION_PRICE_URL")
+JUSO_API_URL = os.getenv("JUSO_API_URL")
 
 API_KEY = os.getenv("API_KEY")
 SERVICE_KEY = os.getenv("SERVICE_KEY")
+CONFM_KEY = os.getenv("CONFM_KEY")
 
 def fetch_registry_data(query_params: dict) -> dict:
     """등기부등본 API 호출"""
@@ -78,6 +80,17 @@ def fetch_sh_transaction_price_data(query_params: dict) -> dict:
         **query_params
     }
     resp = requests.get(SH_TRANSACTION_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_juso_data(query_params: dict) -> dict:
+    "도로명주소 검색 API 호출"
+    params = {
+        "confmKey": JUSO_API_URL,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(JUSO_API_URL, params=params)
     resp.raise_for_status()
     return resp.json()
 

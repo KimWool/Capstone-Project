@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.endpoints import auth, property, users, building, registry, vector, analyze,  chatbot
+from app.api.endpoints import auth, property, users, building, registry, vector, analyze,  chatbot, transaction_price, address
 from app.db.session import engine, Base  # init_db 대신 engine, Base를 가져옵니다
 
 app = FastAPI()
@@ -32,5 +32,6 @@ app.include_router(registry.router)
 app.include_router(vector.router)
 app.include_router(analyze.router, prefix="/analyze", tags=["Analyze"])
 #clude_router(prediction.router, prefix="/prediction", tags=["prediction"])
-#app.include_router(transaction_price.router)
 app.include_router(chatbot.router, prefix="/chatbot", tags=["chatbot"])
+app.include_router(transaction_price.router)
+app.include_router(address.router)
