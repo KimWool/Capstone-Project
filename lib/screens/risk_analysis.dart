@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:capstone_project/screens/address_search.dart';
 
 class RiskAnalysisPage extends StatefulWidget {
   const RiskAnalysisPage({super.key});
@@ -93,6 +94,19 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
               label: '분석할 주소를 입력해주세요',
               controller: addressController,
               hint: '주소를 입력해주세요',
+              enabled: false,
+              // 키보드 입력 막기
+              onTap: () async {
+                final selected = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddressSearchPage()),
+                );
+                if (selected != null) {
+                  setState(() {
+                    addressController.text = selected;
+                  });
+                }
+              },
             ),
             const SizedBox(height: 16),
             const Text(
@@ -201,6 +215,7 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
     bool checkboxValue = false,
     ValueChanged<bool?>? onCheckboxChanged,
     bool enabled = true,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,6 +241,7 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
                 controller: controller,
                 hint: hint,
                 enabled: enabled,
+                onTap: onTap,
               ),
             ),
             if (unit != null) ...[
@@ -252,10 +268,12 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
     required TextEditingController controller,
     required String hint,
     bool enabled = true,
+    VoidCallback? onTap,
   }) {
     return TextField(
       controller: controller,
-      enabled: enabled,
+      readOnly: !enabled, // 키보드 방지
+      onTap: onTap, // 클릭 시 콜백 실행
       decoration: InputDecoration(
         hintText: hint,
         filled: true,

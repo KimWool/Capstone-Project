@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       // initialRoute 나 home 사용
-      initialRoute: '/login',
+      initialRoute: '/risk_analysis',
       routes: {
         '/login': (ctx) => LoginPage(),
         '/sign_up': (ctx) => SignUpPage(),
