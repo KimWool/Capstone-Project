@@ -1,46 +1,71 @@
+// ✅ 수정 사항 반영: 2단계 버튼 구조 구현 + UX 개선
+
 import 'package:flutter/material.dart';
+import 'package:capstone_project/services/api_service.dart';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
 
   @override
-  // 화면 상태 관리하는 _ChatPageState 연결
   State<Chat> createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<Chat> {
   final List<Map<String, dynamic>> chatList = [
     {'message': '안녕하세요! 무엇을 도와드릴까요?', 'isUser': false},
-    {'message': '송파구 전세 분석해줘', 'isUser': true},
-    {'message': '네, 송파구 전세 정보 분석을 시작할게요.', 'isUser': false},
   ];
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  void _sendMessage(String text) {
+  // ✅ 주제 → 키워드 리스트 매핑
+  final Map<String, List<String>> queryMap = {
+    "부동산 계약 기초용어": [
+      "임대인", "임차인", "차임", "보증금", "인도", "양도",
+      "확정일자", "대항력", "우선변제권", "선순위 채권",
+      "근저당권", "계약갱신 요구권", "묵시적 갱신", "전월세 상한제", "소액임차인 최우선 변제권"
+    ],
+    "계약하기 전 확인사항": [
+      "임대인 정보 확인", "안전한 중개사무소 확인법", "적절한 중개보수료 확인법",
+      "등기부등본", "주택 기본정보", "공인중개사 정보 확인"
+    ],
+    "계약 체결 단계에서 유의할 점": [
+      "계약서 양식", "계약기간 및 임대료", "특약사항", "전세계약 체결 기간",
+      "부동산 가계약", "임대인 정보"
+    ],
+    "계약 후 챙겨야 할 것": [
+      "전입신고 및 확정일자", "전입신고 하는 법", "확정일자 받는 법",
+      "전세보증금 반환보증", "전세보증금 반환 보증"
+    ]
+  };
+
+  String? selectedCategory;
+
+  void _sendMessage(String text, {String source = "input"}) async {
     if (text.trim().isEmpty) return;
 
     setState(() {
       chatList.insert(0, {'message': text.trim(), 'isUser': true});
+      // selectedCategory = null;  // ❗ 주석 처리하여 하위 버튼 유지
     });
 
     _controller.clear();
     _scrollToBottom();
 
-    // 가상 AI 응답 (딜레이 후 추가)
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        chatList.insert(0, {'message': 'AI의 응답입니다.', 'isUser': false});
-      });
-      _scrollToBottom();
+    final botResponse = await ApiService.fetchChatbotAnswer(text, source: source);
+
+    setState(() {
+      chatList.insert(0, {'message': botResponse, 'isUser': false});
     });
+
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          0.0, // ListView를 reverse:true 로 만들었기 때문에 0이 가장 아래입니다
+          0.0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -48,11 +73,13 @@ class _ChatPageState extends State<Chat> {
     });
   }
 
-  void _onQuickQuestionSelected(String text) {
-    _sendMessage(text);
+  void _onMainCategorySelected(String category) {
+    setState(() {
+      selectedCategory = category;
+    });
   }
 
-  Widget _buildQuickQuestionButton(String text) {
+  Widget _buildQuickQuestionButton(String text, VoidCallback onPressed) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
@@ -61,8 +88,8 @@ class _ChatPageState extends State<Chat> {
         elevation: 1,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      onPressed: () => _onQuickQuestionSelected(text),
-      child: Text(text, style: TextStyle(fontSize: 13)),
+      onPressed: onPressed,
+      child: Text(text, style: const TextStyle(fontSize: 13)),
     );
   }
 
@@ -71,8 +98,7 @@ class _ChatPageState extends State<Chat> {
     final message = chat['message'];
 
     return Row(
-      mainAxisAlignment:
-      isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!isUser) ...[
@@ -95,10 +121,8 @@ class _ChatPageState extends State<Chat> {
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(12),
                 topRight: const Radius.circular(12),
-                bottomLeft:
-                Radius.circular(isUser ? 12 : 0), // 사용자면 오른쪽 말풍선
-                bottomRight:
-                Radius.circular(isUser ? 0 : 12), // AI면 왼쪽 말풍선
+                bottomLeft: Radius.circular(isUser ? 12 : 0),
+                bottomRight: Radius.circular(isUser ? 0 : 12),
               ),
             ),
             child: Text(
@@ -113,6 +137,8 @@ class _ChatPageState extends State<Chat> {
 
   @override
   Widget build(BuildContext context) {
+    final subKeywords = selectedCategory != null ? queryMap[selectedCategory!] ?? [] : [];
+
     return Scaffold(
       backgroundColor: const Color(0xfff9f9f9),
       resizeToAvoidBottomInset: true,
@@ -131,7 +157,7 @@ class _ChatPageState extends State<Chat> {
         centerTitle: true,
       ),
       body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(), // 화면 터치 시 키보드 내리기
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
           children: [
             Expanded(
@@ -147,38 +173,58 @@ class _ChatPageState extends State<Chat> {
               ),
             ),
 
-            // 추천 질문 버튼
+            // ✅ 추천 질문 메인 카테고리
             Container(
               color: Colors.grey[100],
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: [
-                  _buildQuickQuestionButton("전세 사기 위험 분석"),
-                  _buildQuickQuestionButton("등기부등본 보는 법"),
-                  _buildQuickQuestionButton("건축물대장 해석하기"),
-                ],
+                children: queryMap.keys.map((category) =>
+                    _buildQuickQuestionButton(category, () => _onMainCategorySelected(category))).toList(),
               ),
             ),
 
-            // 메시지 입력창
+            // ✅ 서브 키워드 버튼 표시 (가로 스크롤 대응)
+            if (selectedCategory != null) ...[
+              Container(
+                height: 50,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                color: Colors.grey[200],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: subKeywords.map((keyword) =>
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _buildQuickQuestionButton(keyword, () => _sendMessage(keyword, source: "button")),
+                        )
+                    ).toList(),
+                  ),
+                ),
+              )
+            ],
+
+            // ✅ 메시지 입력창
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               color: Colors.white,
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.send,
+                      enableSuggestions: true,
+                      autocorrect: true,
                       decoration: const InputDecoration(
                         hintText: "메시지를 입력하세요",
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(20)),
                         ),
-                        contentPadding:
-                        EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                       ),
                     ),
                   ),
@@ -196,9 +242,3 @@ class _ChatPageState extends State<Chat> {
     );
   }
 }
-
-
-
-
-
-

@@ -56,4 +56,28 @@ class ApiService {
       return {"success": false, "message": body["detail"] ?? "Invalid credentials"};
     }
   }
+
+
+  //  챗봇 메시지 요청 함수
+  static Future<String> fetchChatbotAnswer(String userMessage, {String source = "input"}) async {
+    final url = Uri.parse("$_baseUrl/chatbot/chat");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "message": userMessage,
+        "source": source, // ✅ 이게 꼭 포함되어야 함
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // ✅ 한글 깨짐 방지
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data['answer'] ?? '답변을 찾을 수 없습니다.';
+    } else {
+      return '서버 오류: ${response.statusCode}';
+    }
+  }
+
+
 }
