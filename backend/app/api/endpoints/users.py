@@ -38,17 +38,16 @@ def get_db():
     finally:
         db.close()
 
-# Create user
+#  일반 사용자 생성 (예: 관리자용 API)
 @router.post("/", response_model=UserOut)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    # 중복 체크
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     hashed_pw = get_password_hash(user.password)
     new_user = User(
-        user_id=str(uuid.uuid4()),  # ✅ 이거 꼭 추가!
+        user_id=str(uuid.uuid4()),  # ✅ UUID 문자열로 직접 생성
         email=user.email,
         username=user.username,
         hashed_password=hashed_pw,

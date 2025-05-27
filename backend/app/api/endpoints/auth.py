@@ -32,14 +32,13 @@ router = APIRouter()
 # 이메일 회원가입 엔드포인트
 @router.post("/signup/email")
 async def signup_email(
-    body: SignupEmailRequest,  # ← JSON 바디가 이 모델로 파싱됩니다
+    body: SignupEmailRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    
-    email    = body.email
+    email = body.email
     password = body.password
     username = body.username
-    
+
     # 중복 이메일 확인
     result = await db.execute(
         select(User).where(User.email == email, User.provider == "email")
@@ -50,19 +49,18 @@ async def signup_email(
 
     # 비밀번호 해시 및 사용자 생성
     hashed_pw = get_password_hash(password)
-
     new_user = User(
-    user_id=str(uuid.uuid4()),   # <- 여기 추가!
-    email=email,
-    username=username,
-    hashed_password=hashed_pw,
-    provider="email"
+        user_id=str(uuid.uuid4()),  # ✅ UUID 문자열로 직접 생성
+        email=email,
+        username=username,
+        hashed_password=hashed_pw,
+        provider="email"
     )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
 
-    # JWT 토큰 반환
+    # JWT 토큰 발급
     token = create_access_token({"sub": str(new_user.user_id)})
     return {"access_token": token, "user": new_user.email}
 

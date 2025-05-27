@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.schemas.analyze import AnalyzeRequest, AnalyzeResponse
 from app.clients.registry_api import get_registry_info
 from app.clients.building_api import get_building_title_info
-from app.services.sllm_model import extract_metadata
+#from app.services.sllm_model import extract_metadata
 #from app.services.vector_db import store_metadata
 
 router = APIRouter()
