@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class AddressSearchPage extends StatefulWidget {
   const AddressSearchPage({super.key});
@@ -10,36 +10,50 @@ class AddressSearchPage extends StatefulWidget {
 }
 
 class _AddressSearchPageState extends State<AddressSearchPage> {
-  late final WebViewController _webViewController;
+  final InAppLocalhostServer _localhostServer = InAppLocalhostServer();
 
   @override
   void initState() {
     super.initState();
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..clearCache()
-      ..setNavigationDelegate(NavigationDelegate())
-      ..addJavaScriptChannel(
-        'onComplete',
-        onMessageReceived: (message) async {
-          final selectedAddress = message.message;
-          print('받은 주소: $selectedAddress');
+    startServerAndLoad();
+  }
 
-          await Future.delayed(Duration(milliseconds: 100));
+  Future<void> startServerAndLoad() async {
+    await _localhostServer.start();
+    setState(() {});
+  }
 
-          if(context.mounted) {
-            Navigator.pop(context, selectedAddress);
-          }
-        },
-      )
-      ..loadFlutterAsset('assets/html/postcode.html');
+  @override
+  void dispose() {
+    _localhostServer.close();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("주소 검색")),
-      body: WebViewWidget(controller: _webViewController),
+      body: _localhostServer.isRunning()
+          ? InAppWebView(
+        initialUrlRequest: URLRequest(
+          url: WebUri("http://localhost:8080/assets/html/postcode.html"),
+        ),
+        initialOptions: InAppWebViewGroupOptions(
+          crossPlatform: InAppWebViewOptions(
+            javaScriptEnabled: true,
+          ),
+        ),
+        onWebViewCreated: (controller) {
+          controller.addJavaScriptHandler(
+            handlerName: 'onComplete',
+            callback: (args) {
+              final data = jsonDecode(args.first);
+              Navigator.pop(context, data);
+            },
+          );
+        },
+      )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

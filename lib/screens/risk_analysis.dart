@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:capstone_project/screens/address_search.dart';
 
@@ -9,15 +10,15 @@ class RiskAnalysisPage extends StatefulWidget {
 }
 
 class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
-  // 입력 컨트롤러
   final TextEditingController priceController = TextEditingController();
   final TextEditingController durationController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController detailAddressController = TextEditingController();
 
-  // 체크박스 상태
   bool isDurationUnknown = false;
   bool isDetailAddressUnknown = false;
+
+  Map<String, dynamic>? selectedAddressData;
 
   @override
   void dispose() {
@@ -29,17 +30,38 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
   }
 
   void _onAnalyzePressed() {
-    final price = priceController.text;
-    final duration = durationController.text;
-    final address = addressController.text;
-    final detailAddress = detailAddressController.text;
+    final fullAddress = '${addressController.text} ${detailAddressController.text}';
+    final bcode = selectedAddressData?['bcode'] ?? '없음';
+    final mainNo = selectedAddressData?['mainAddressNo'] ?? '없음';
+    final subNo = selectedAddressData?['subAddressNo'] ?? '없음';
 
-    print('전세금액: $price');
-    print('계약기간: ${isDurationUnknown ? "모름" : duration}');
-    print('주소: $address');
-    print('상세주소: ${isDetailAddressUnknown ? "모름" : detailAddress}');
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('분석 요청 정보'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('주소: $fullAddress'),
+            Text('법정동코드: $bcode'),
+            Text('본번: $mainNo'),
+            Text('부번: $subNo'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/risk_result');
+            },
+            child: const Text('확인'),
+          )
+        ],
+      ),
+    );
 
-    Navigator.pushNamed(context, '/risk_result');
   }
 
   @override
@@ -49,16 +71,9 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
-        centerTitle: true,
         elevation: 0,
-        title: const Text(
-          '전세 위험도 분석',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
+        centerTitle: true,
+        title: const Text('전세 위험도 분석', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -93,9 +108,8 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
               imagePath: 'assets/Location.png',
               label: '분석할 주소를 입력해주세요',
               controller: addressController,
-              hint: '주소를 입력해주세요',
+              hint: '주소를 선택해주세요',
               enabled: false,
-              // 키보드 입력 막기
               onTap: () async {
                 final selected = await Navigator.push(
                   context,
@@ -103,7 +117,8 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
                 );
                 if (selected != null) {
                   setState(() {
-                    addressController.text = selected;
+                    selectedAddressData = selected;
+                    addressController.text = selected['fullAddress'] ?? '';
                   });
                 }
               },
@@ -111,10 +126,7 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
             const SizedBox(height: 16),
             const Text(
               '상세 주소를 입력해주세요',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             _buildInputField(
@@ -137,70 +149,27 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
             ),
             const SizedBox(height: 30),
             Center(
-              child: IntrinsicWidth(
-                child: ElevatedButton(
-                  onPressed: _onAnalyzePressed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF010186),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 14, horizontal: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              child: ElevatedButton(
+                onPressed: _onAnalyzePressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF010186),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    '전세 사기 위험도 분석하기',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                ),
+                child: const Text(
+                  '전세 사기 위험도 분석하기',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        currentIndex: 1,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF010186),
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushNamed(context, '/main');
-              break;
-            case 1:
-              break;
-            case 2:
-              Navigator.pushNamed(context, '/contract_info_step');
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/my');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/home_icon.png')),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/analysis_solid_icon.png')),
-            label: '위험도 분석',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/chart_underbar.png')),
-            label: '계약서 정보',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/mypage_icon.png')),
-            label: '마이페이지',
-          ),
-        ],
       ),
     );
   }
@@ -224,13 +193,7 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
           children: [
             Image.asset(imagePath, width: 24, height: 24),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text(label, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 10),
@@ -253,10 +216,7 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
         if (showCheckbox)
           Row(
             children: [
-              Checkbox(
-                value: checkboxValue,
-                onChanged: onCheckboxChanged,
-              ),
+              Checkbox(value: checkboxValue, onChanged: onCheckboxChanged),
               const Text('잘 모르겠어요'),
             ],
           ),
@@ -272,19 +232,14 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
   }) {
     return TextField(
       controller: controller,
-      readOnly: !enabled, // 키보드 방지
-      onTap: onTap, // 클릭 시 콜백 실행
+      readOnly: !enabled,
+      onTap: onTap,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),

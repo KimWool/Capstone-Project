@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   webview_flutter: ^4.2.2
+  flutter_inappwebview: ^6.0.0
   http: ^0.13.0 #Flutter에서 REST API와 통신하기 위해 http 패키지를 사용
   shared_preferences: ^2.2.2
 
