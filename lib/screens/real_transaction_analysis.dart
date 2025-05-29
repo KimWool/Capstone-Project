@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http; // 상단에 추가
+
 
 class RealTransactionAnalysisPage extends StatefulWidget {
   const RealTransactionAnalysisPage({super.key});
@@ -8,6 +11,9 @@ class RealTransactionAnalysisPage extends StatefulWidget {
 }
 
 class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPage> {
+  String selectedPropertyType = '아파트';
+  final List<String> _propertyTypes = ['아파트', '연립다세대'];
+
   final TextEditingController locationController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
 
@@ -20,15 +26,71 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
     super.dispose();
   }
 
-  void _onAnalyzePressed() {
+  void _onAnalyzePressed() async{
     final location = locationController.text;
     final price = isPriceUnknown ? '모름' : priceController.text;
+    Map<String, dynamic>? jeonseRates;
 
     print('입력한 동네: $location');
     print('입력한 전세 금액: $price');
 
-    // TODO: 이후 실거래가 분석 로직 연결
-    Navigator.pushNamed(context, '/real_transaction_report');
+    try {
+      final analysis_response = await http.post(
+        Uri.parse('http://127.0.0.1:8000/transaction/summary'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'address': location,
+          'house_type': selectedPropertyType,
+        }),
+      );
+
+      if (analysis_response.statusCode == 200) {
+        final result = jsonDecode(utf8.decode(analysis_response.bodyBytes));
+        // 결과 확인
+        print('실거래가 분석 결과: $result');
+
+      final rentRateResponse = await http.post(
+        Uri.parse('http://127.0.0.1:8000/rent-rate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'address': location,
+        }),
+      );
+
+        if (rentRateResponse.statusCode == 200) {
+          final rentRateJson = jsonDecode(utf8.decode(rentRateResponse.bodyBytes));
+          print('전세가율 응답: $rentRateJson');
+          //print('rentRateResponse statusCode: ${rentRateResponse.statusCode}');
+          //print('rentRateResponse body: ${utf8.decode(rentRateResponse.bodyBytes)}');
+          if (rentRateJson['status'] != null && rentRateJson['status']['rate'] == 'ok') {
+            jeonseRates = Map.from(rentRateJson)
+              ..remove('status');
+          }
+        }else{
+          _showErrorDialog('서버 응답 오류: ${rentRateResponse.statusCode}');
+        }
+
+        // 결과 페이지로 이동하며 결과 데이터 전달
+        Navigator.pushNamed(
+          context,
+          '/real_transaction_report',
+          arguments: {
+            'result': result,
+            'entered_price': price,
+            'house_type': selectedPropertyType,
+            'jeonseRates': jeonseRates,
+          },
+        );
+
+      } else {
+        print('API 요청 실패: ${analysis_response.body}');
+        _showErrorDialog('서버 응답 오류: ${analysis_response.statusCode}');
+      }
+    } catch (e) {
+      print('요청 중 오류 발생: $e');
+      _showErrorDialog('서버 요청 중 오류가 발생했습니다.');
+    }
+
   }
 
   @override
@@ -58,7 +120,43 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
               imagePath: 'assets/Home.png',
               label: '이사 가고 싶은\n동네를 입력하세요',
               controller: locationController,
-              hint: 'ex) 서울시 송파구 잠실동',
+              hint: 'ex) 서울특별시 송파구 잠실동',
+            ),
+            SizedBox(height: 24),
+            _buildDropdownSection(
+              imagePath: 'assets/Building.png',
+              label: '전세 건물 유형을 선택하세요',
+              dropdown: DropdownButtonFormField<String>(
+                value: selectedPropertyType,
+                items: _propertyTypes.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedPropertyType = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF010186)),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 24),
             _buildInputSection(
@@ -202,6 +300,33 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
       ],
     );
   }
+  Widget _buildDropdownSection({
+    required String imagePath,
+    required String label,
+    required Widget dropdown,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Image.asset(imagePath, width: 40, height: 40),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        dropdown,
+      ],
+    );
+  }
 
   Widget _buildInputField({
     required TextEditingController controller,
@@ -231,4 +356,22 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
       ),
     );
   }
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('오류'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: Text('확인'),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }

@@ -1,15 +1,15 @@
-# backend/app/clients/transaction_price_api.py
+# backend/app/clients/jeonse_price_api.py
 
 import os
 import httpx
 from typing import List, Union
 from fastapi import HTTPException
 from dotenv import load_dotenv
-from app.schemas.transaction_price import (
-  AptTransactionPrice,
-  OffiTransactionPrice,
-  RhTransactionPrice,
-  ShTransactionPrice
+from app.schemas.trade_price import (
+  AptTradePrice,
+  OffiTradePrice,
+  RhTradePrice,
+  ShTradePrice
 )
 import logging
 import xmltodict
@@ -17,10 +17,10 @@ import xmltodict
 # 환경 변수 로드
 load_dotenv()
 
-APT_TRANSACTION_PRICE_URL = os.getenv("APT_TRANSACTION_PRICE_URL")
-OFFI_TRANSACTION_PRICE_URL = os.getenv("OFFI_TRANSACTION_PRICE_URL")
-RH_TRANSACTION_PRICE_URL = os.getenv("RH_TRANSACTION_PRICE_URL")
-SH_TRANSACTION_PRICE_URL = os.getenv("SH_TRANSACTION_PRICE_URL")
+APT_TRADE_PRICE_URL = os.getenv("APT_TRADE_PRICE_URL")
+OFFI_TRADE_PRICE_URL = os.getenv("OFFI_TRADE_PRICE_URL")
+RH_TRADE_PRICE_URL = os.getenv("RH_TRADE_PRICE_URL")
+SH_TRADE_PRICE_URL = os.getenv("SH_TRADE_PRICE_URL")
 SERVICE_KEY = os.getenv("SERVICE_KEY")
 
 # 로거 설정
@@ -28,19 +28,19 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # 환경 변수 검증
-if not all([APT_TRANSACTION_PRICE_URL, OFFI_TRANSACTION_PRICE_URL, RH_TRANSACTION_PRICE_URL, SH_TRANSACTION_PRICE_URL, SERVICE_KEY]):
+if not all([APT_TRADE_PRICE_URL, OFFI_TRADE_PRICE_URL, RH_TRADE_PRICE_URL, SH_TRADE_PRICE_URL, SERVICE_KEY]):
   raise RuntimeError("필수 환경 변수가 누락되었습니다.")
 
 # API URL 선택 함수
 def get_url_by_property_type(property_type: str) -> str:
   if property_type == "apt":
-    return APT_TRANSACTION_PRICE_URL
+    return APT_TRADE_PRICE_URL
   elif property_type == "offi":
-    return OFFI_TRANSACTION_PRICE_URL
+    return OFFI_TRADE_PRICE_URL
   elif property_type == "rh":
-    return RH_TRANSACTION_PRICE_URL
+    return RH_TRADE_PRICE_URL
   elif property_type == "sh":
-    return SH_TRANSACTION_PRICE_URL
+    return SH_TRADE_PRICE_URL
   else:
     raise ValueError("지원하지 않는 부동산 유형입니다. (apt, offi, rh, sh 중 하나)")
 
@@ -59,9 +59,9 @@ def safe_float(val, default=0.0):
 
 
 # API 요청 및 파싱 함수
-async def fetch_transaction_price_data(region_code: str, deal_ym: str, property_type: str = "apt") -> List[Union[AptTransactionPrice, OffiTransactionPrice, RhTransactionPrice, ShTransactionPrice]]:
+async def fetch_trade_price_data(region_code: str, deal_ym: str, property_type: str = "apt") -> List[Union[AptTradePrice, OffiTradePrice, RhTradePrice, ShTradePrice]]:
   """
-  아파트/오피스텔/연립다세대/단독다가구 전월세 실거래가 조회
+  아파트/오피스텔/연립다세대/단독다가구 매매 실거래가 조회
   :param region_code: 법정동 코드
   :param deal_ym: 계약 년월
   :param property_type: 'apt', 'offi', 'rh', 'sh' 중 하나
@@ -71,7 +71,7 @@ async def fetch_transaction_price_data(region_code: str, deal_ym: str, property_
     "serviceKey": SERVICE_KEY,
     "LAWD_CD": region_code,
     "DEAL_YMD": deal_ym,
-    "numOfRows": "100",
+    "numOfRows": "500",
     "pageNo": "1",
   }
 
@@ -110,10 +110,10 @@ async def fetch_transaction_price_data(region_code: str, deal_ym: str, property_
 
     # 항목에 따라 적절한 모델로 변환
     model_map = {
-      "apt": AptTransactionPrice,
-      "offi": OffiTransactionPrice,
-      "rh": RhTransactionPrice,
-      "sh": ShTransactionPrice,
+      "apt": AptTradePrice,
+      "offi": OffiTradePrice,
+      "rh": RhTradePrice,
+      "sh": ShTradePrice,
     }
     ModelClass = model_map.get(property_type)
     if not ModelClass:

@@ -3,16 +3,21 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from app.clients.transaction_price_api import SERVICE_KEY
+from app.clients.jeonse_price_api import SERVICE_KEY
 
 load_dotenv()
 
 REGISTRY_API_URL = os.getenv("REGISTRY_API_URL")
 BUILDING_API_URL = os.getenv("BUILDING_API_URL")
-APT_TRANSACTION_PRICE_URL = os.getenv("APT_TRANSACTION_PRICE_URL")
-OFFI_TRANSACTION_PRICE_URL = os.getenv("OFFI_TRANSACTION_PRICE_URL")
-RH_TRANSACTION_PRICE_URL = os.getenv("RH_TRANSACTION_PRICE_URL")
-SH_TRANSACTION_PRICE_URL = os.getenv("SH_TRANSACTION_PRICE_URL")
+APT_JEONSE_PRICE_URL = os.getenv("APT_JEONSE_PRICE_URL")
+OFFI_JEONSE_PRICE_URL = os.getenv("OFFI_JEONSE_PRICE_URL")
+RH_JEONSE_PRICE_URL = os.getenv("RH_JEONSE_PRICE_URL")
+SH_JEONSE_PRICE_URL = os.getenv("SH_JEONSE_PRICE_URL")
+
+APT_TRADE_PRICE_URL = os.getenv("APT_TRADE_PRICE_URL")
+OFFI_TRADE_PRICE_URL = os.getenv("OFFI_TRADE_PRICE_URL")
+RH_TRADE_PRICE_URL = os.getenv("RH_TRADE_PRICE_URL")
+SH_TRADE_PRICE_URL = os.getenv("SH_TRADE_PRICE_URL")
 JUSO_API_URL = os.getenv("JUSO_API_URL")
 
 API_KEY = os.getenv("API_KEY")
@@ -39,47 +44,91 @@ def fetch_building_data(query_params: dict) -> dict:
     resp.raise_for_status()
     return resp.json()
 
-def fetch_apt_transaction_price_data(query_params: dict) -> dict:
+def fetch_apt_jeonse_price_data(query_params: dict) -> dict:
     """아파트_전월세_실거래가 API 호출"""
     params = {
         "serviceKey": SERVICE_KEY,
         "_type": "json",
         **query_params
     }
-    resp = requests.get(APT_TRANSACTION_PRICE_URL, params=params)
+    resp = requests.get(APT_JEONSE_PRICE_URL, params=params)
     resp.raise_for_status()
     return resp.json()
 
-def fetch_offi_transaction_price_data(query_params: dict) -> dict:
+def fetch_offi_jeonse_price_data(query_params: dict) -> dict:
     """오피스텔_전월세_실거래가 API 호출"""
     params = {
         "serviceKey": SERVICE_KEY,
         "_type": "json",
         **query_params
     }
-    resp = requests.get(OFFI_TRANSACTION_PRICE_URL, params=params)
+    resp = requests.get(OFFI_JEONSE_PRICE_URL, params=params)
     resp.raise_for_status()
     return resp.json()
 
-def fetch_rh_transaction_price_data(query_params: dict) -> dict:
+def fetch_rh_jeonse_price_data(query_params: dict) -> dict:
     """연립다세대_전월세_실거래가 API 호출(row house)"""
     params = {
         "serviceKey": SERVICE_KEY,
         "_type": "json",
         **query_params
     }
-    resp = requests.get(RH_TRANSACTION_PRICE_URL, params=params)
+    resp = requests.get(RH_JEONSE_PRICE_URL, params=params)
     resp.raise_for_status()
     return resp.json()
 
-def fetch_sh_transaction_price_data(query_params: dict) -> dict:
+def fetch_sh_jeonse_price_data(query_params: dict) -> dict:
     """단독/다가구_전월세_실거래가 API 호출(single house)"""
     params = {
         "serviceKey": SERVICE_KEY,
         "_type": "json",
         **query_params
     }
-    resp = requests.get(SH_TRANSACTION_PRICE_URL, params=params)
+    resp = requests.get(SH_JEONSE_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_apt_trade_price_data(query_params: dict) -> dict:
+    """아파트_매매_실거래가 API 호출"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(APT_TRADE_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_offi_trade_price_data(query_params: dict) -> dict:
+    """오피스텔_매매_실거래가 API 호출"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(OFFI_TRADE_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_rh_trade_price_data(query_params: dict) -> dict:
+    """연립다세대_매매_실거래가 API 호출"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(RH_TRADE_PRICE_URL, params=params)
+    resp.raise_for_status()
+    return resp.json()
+
+def fetch_sh_trade_price_data(query_params: dict) -> dict:
+    """단독/다가구_매매_실거래가 API 호출"""
+    params = {
+        "serviceKey": SERVICE_KEY,
+        "_type": "json",
+        **query_params
+    }
+    resp = requests.get(SH_TRADE_PRICE_URL, params=params)
     resp.raise_for_status()
     return resp.json()
 

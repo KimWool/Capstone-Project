@@ -1,10 +1,10 @@
-# app/schemas/transaction_price.py
+# app/schemas/jeonse_price.py
 
 from pydantic import BaseModel
 from typing import Optional, List, Union
 
 #공통 스키마
-class TransactionPriceBase(BaseModel):
+class JeonsePriceBase(BaseModel):
   dealYear: int                        # 계약 연도
   dealMonth: int                       # 계약 월
   dealDay: int                         # 계약 일
@@ -17,7 +17,7 @@ class TransactionPriceBase(BaseModel):
   preMonthlyRent: Optional[str]        # 종전 월세
 
 #아파트
-class AptTransactionPrice(TransactionPriceBase):
+class AptJeonsePrice(JeonsePriceBase):
   sggCd: Optional[str]                        # 지역(시군구) 코드
   umdNm: Optional[str]                        # 법정동 명칭
   aptNm: Optional[str]                        # 아파트명
@@ -27,7 +27,7 @@ class AptTransactionPrice(TransactionPriceBase):
   buildYear: Optional[Union[int, str]]        # 건축년도
 
 # 오피스텔
-class OffiTransactionPrice(TransactionPriceBase):
+class OffiJeonsePrice(JeonsePriceBase):
   sggCd: Optional[str]
   sggNm: Optional[str]
   umdNm: Optional[str]
@@ -39,7 +39,7 @@ class OffiTransactionPrice(TransactionPriceBase):
 
 
 # 연립다세대
-class RhTransactionPrice(TransactionPriceBase):
+class RhJeonsePrice(JeonsePriceBase):
   sggCd: Optional[str]
   umdNm: Optional[str]
   mhouseNm: Optional[str]
@@ -50,7 +50,7 @@ class RhTransactionPrice(TransactionPriceBase):
 
 
 # 단독/다가구
-class ShTransactionPrice(TransactionPriceBase):
+class ShJeonsePrice(JeonsePriceBase):
   sggCd: Optional[str]
   umdNm: Optional[str]
   totalFloorAr: Optional[Union[str, float]]

@@ -8,4 +8,6 @@ passlib[bcrypt]
 pyjwt
 requests
 email-validator
+html_table_parser
+selenium
 
