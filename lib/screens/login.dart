@@ -52,6 +52,8 @@ class _LoginPageState extends State<LoginPage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("userId", userId);
       await prefs.setString("token", token);
+      await prefs.setString("email", data["user"]["email"]);  // 👈 이메일도 저장
+
 
       Navigator.pushReplacement(
         context,

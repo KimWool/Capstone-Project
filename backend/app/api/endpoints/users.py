@@ -6,6 +6,8 @@ from pydantic import BaseModel, EmailStr
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.services.auth import get_password_hash
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -82,8 +84,9 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 # ─────────────────────────────
 
 @router.get("/by-email", response_model=UserOut)
-def read_user_by_email(email: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == email).first()
+async def read_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
