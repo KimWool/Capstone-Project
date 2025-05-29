@@ -80,24 +80,40 @@ class MainPage extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // 실거래가 분석 + 계약 단계별 정보 카드
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _smallCard(
-                    title: '실거래가 분석',
-                    iconPath: 'assets/map_icon.png',
-                    onTap: () {
-                      Navigator.pushNamed(context, '/real_transaction_analysis');
-                    },
-                    cardColor: const Color(0xFF83A5F6),
-                    titleAlignment: MainAxisAlignment.end,
-                    isIconLeft: true,
-                    iconAlignment: MainAxisAlignment.start,
+              // 실거래가 분석
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/real_transaction_analysis');
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF83A5F6),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-
-                ],
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '실거래가\n분석',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      Image.asset(
+                        'assets/map_icon.png',
+                        width: 100,
+                        height: 100,
+                      ),
+                    ],
+                  ),
+                ),
               ),
+
 
               const SizedBox(height: 24),
 
