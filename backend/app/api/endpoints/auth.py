@@ -62,7 +62,17 @@ async def signup_email(
 
     # JWT 토큰 발급
     token = create_access_token({"sub": str(new_user.user_id)})
-    return {"access_token": token, "user": new_user.email}
+    return {
+    "success": True,
+    "access_token": token,
+    "user": {
+        "user_id": str(new_user.user_id),
+        "email": new_user.email,
+        "username": new_user.username
+    }
+}
+
+
 
 
 # 이메일 로그인 엔드포인트
@@ -71,7 +81,6 @@ async def login_email(
     body: LoginEmailRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    
     email = body.email
     password = body.password
 
@@ -83,5 +92,16 @@ async def login_email(
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
     token = create_access_token({"sub": str(user.user_id)})
-    return {"access_token": token, "user": user.email}
+
+    # ✅ Flutter가 기대하는 구조로 반환
+    return {
+        "success": True,
+        "access_token": token,
+        "user": {
+            "user_id": str(user.user_id),
+            "email": user.email,
+            "username": user.username
+        }
+    }
+
 

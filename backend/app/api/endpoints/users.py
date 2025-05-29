@@ -29,7 +29,7 @@ class UserUpdate(BaseModel):
 
 
 class UserOut(BaseModel):
-    user_id: int
+    user_id: str  # ✅ int → str로 수정
     email: EmailStr
     username: str = None
     provider: str
@@ -73,7 +73,7 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 # Read single user by ID
 @router.get("/{user_id}", response_model=UserOut)
-def read_user(user_id: int, db: Session = Depends(get_db)):
+def read_user(user_id: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -81,7 +81,7 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 # Update user
 @router.put("/{user_id}", response_model=UserOut)
-def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
+def update_user(user_id: str, user_update: UserUpdate, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -100,7 +100,7 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
 
 # Delete user
 @router.delete("/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

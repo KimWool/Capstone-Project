@@ -4,8 +4,6 @@ import 'package:capstone_project/screens/sign_up.dart';
 import 'package:capstone_project/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -15,8 +13,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  bool _loading = false; //로그인 중 표시용
-  String? _error; //에러 메시지
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -40,22 +38,21 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     final result = await ApiService.login(email: email, password: pw);
+    print("🧪 로그인 응답: $result");
 
     setState(() {
       _loading = false;
     });
 
     if (result["success"] == true) {
-      // ✅ 1. userId와 token 추출 (API 응답에 따라 키 이름은 조정)
-      final userId = result["user"]["user_id"];       // 예: UUID
-      final token = result["access_token"];
+      final data = result["data"]; // ✅ 실제 응답 본문
+      final userId = data["user"]["user_id"].toString();
+      final token = data["access_token"];
 
-      // ✅ 2. SharedPreferences에 저장
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("userId", userId);
       await prefs.setString("token", token);
 
-      // ✅ 3. MainPage로 이동
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainPage()),
@@ -64,7 +61,6 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _error = result["message"] as String);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +105,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          // 에러 메시지
           if (_error != null)
             Positioned(
               top: 360,
@@ -122,7 +117,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-          // 로그인 버튼 or 로딩 인디케이터
           Positioned(
             top: 391,
             left: 71,
@@ -147,8 +141,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
-          // 회원가입 링크
           Positioned(
             top: 448,
             left: 76,
@@ -163,8 +155,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
-
         ],
       ),
     );
