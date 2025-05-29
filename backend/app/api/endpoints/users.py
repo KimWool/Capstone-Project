@@ -98,8 +98,9 @@ async def read_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
 # ─────────────────────────────
 
 @router.put("/{user_id}", response_model=UserOut)
-def update_user(user_id: str, user_update: UserUpdate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_id == user_id).first()
+async def update_user(user_id: str, user_update: UserUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.user_id == user_id))
+    user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -112,9 +113,10 @@ def update_user(user_id: str, user_update: UserUpdate, db: Session = Depends(get
     if user_update.phone is not None:
         user.phone = user_update.phone
 
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
+
 
 # ─────────────────────────────
 # ✅ 사용자 삭제

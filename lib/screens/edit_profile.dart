@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:capstone_project/services/api_service.dart'; //
-
+import 'package:capstone_project/services/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -34,7 +33,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     final storedEmail = prefs.getString('email') ?? '';
-    final token = prefs.getString('token') ?? '';
+    token = prefs.getString('token') ?? '';
 
     if (storedEmail.isEmpty || token.isEmpty) {
       print('❌ 저장된 이메일 또는 토큰이 없습니다.');
@@ -54,7 +53,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       print('❌ 사용자 정보 로딩 실패: ${result['message']}');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -124,12 +122,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
             const SizedBox(height: 16),
             _buildLabeledField(
               label: '이메일',
-              child: TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  hintText: '이메일 입력',
-                  border: OutlineInputBorder(),
-                  isDense: true,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F4F4),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  emailController.text,
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ),
             ),
@@ -159,7 +160,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 onPressed: () async {
                   final password = passwordController.text;
                   final confirmPassword = confirmPasswordController.text;
-                  final email = emailController.text;
                   final phone = phoneController.text;
 
                   if (password != confirmPassword) {
@@ -169,34 +169,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     return;
                   }
 
-                  try {
-                    final response = await http.put(
-                      Uri.parse('http://10.0.2.2:8000/users/$userId'),
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer $token',
-                      },
-                      body: jsonEncode({
-                        'password': password,
-                        'email': email,
-                        'phone': phone,
-                      }),
-                    );
+                  final result = await ApiService.updateUser(
+                    userId: userId,
+                    token: token,
+                    password: password.isNotEmpty ? password : null,
+                    phone: phone,
+                  );
 
-                    if (response.statusCode == 200) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('정보가 성공적으로 수정되었습니다.')),
-                      );
-                      Navigator.pushNamed(context, '/my');
-                    } else {
-                      final msg = jsonDecode(response.body)['detail'];
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('오류: $msg')),
-                      );
-                    }
-                  } catch (e) {
+                  if (result['success'] == true) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('에러 발생: $e')),
+                      const SnackBar(content: Text('정보가 성공적으로 수정되었습니다.')),
+                    );
+                    Navigator.pushNamedAndRemoveUntil(context, '/my', (route) => false);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('오류: ${result["message"]}')),
                     );
                   }
                 },

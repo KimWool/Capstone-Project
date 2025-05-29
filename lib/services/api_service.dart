@@ -104,5 +104,39 @@ class ApiService {
   }
 
 
+  // ✅ 회원정보 수정 API 호출
+  static Future<Map<String, dynamic>> updateUser({
+    required String userId,
+    required String token,
+    String? password,
+    String? phone,
+  }) async {
+    final uri = Uri.parse("$_baseUrl/users/$userId");
+
+    // 전송할 필드만 포함
+    final Map<String, dynamic> body = {};
+    if (password != null && password.isNotEmpty) body['password'] = password;
+    if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+
+    final resp = await http.put(
+      uri,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(body),
+    );
+
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(resp.bodyBytes));
+      return {"success": true, "data": data};
+    } else {
+      final msg = jsonDecode(resp.body)['detail'] ?? '오류 발생';
+      return {"success": false, "message": msg};
+    }
+  }
+
+
+
 
 }
