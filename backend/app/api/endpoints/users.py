@@ -7,6 +7,10 @@ from pydantic import BaseModel, EmailStr
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.services.auth import get_password_hash
+from pydantic import BaseModel
+from fastapi import HTTPException, Depends
+from app.services.auth import verify_password, get_password_hash
+
 
 router = APIRouter()
 
@@ -16,10 +20,13 @@ class UserCreate(BaseModel):
     username: str = None
     password: str
 
+
 class UserUpdate(BaseModel):
     username: str = None
-    # password 업데이트 옵션도 추가할 수 있습니다.
     password: str = None
+    email: EmailStr = None
+    phone: str = None  # 새로 추가
+
 
 class UserOut(BaseModel):
     user_id: int
@@ -28,7 +35,7 @@ class UserOut(BaseModel):
     provider: str
 
     class Config:
-        frome_attributes = True
+        from_attributes = True
 
 # DB 세션 의존성
 def get_db():
@@ -82,6 +89,11 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
         user.username = user_update.username
     if user_update.password is not None:
         user.hashed_password = get_password_hash(user_update.password)
+    if user_update.email is not None:
+        user.email = user_update.email
+    if user_update.phone is not None:
+        user.phone = user_update.phone
+
     db.commit()
     db.refresh(user)
     return user
@@ -95,3 +107,25 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"detail": "User deleted"}
+
+
+# 비밀번호 변경 (전용 API)
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.put("/change-password/{user_id}")
+def change_password(
+    user_id: str,
+    payload: PasswordChangeRequest,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.hashed_password = get_password_hash(payload.new_password)
+    db.commit()
+
+    return {"message": "비밀번호가 성공적으로 변경되었습니다."}
+

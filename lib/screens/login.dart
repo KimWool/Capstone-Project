@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:capstone_project/screens/mainpage.dart';
 import 'package:capstone_project/screens/sign_up.dart';
 import 'package:capstone_project/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 
 class LoginPage extends StatefulWidget {
@@ -25,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _onLoginPressed() async {
     final email = _idController.text.trim();
-    final pw    = _passwordController.text;
+    final pw = _passwordController.text;
 
     if (email.isEmpty || pw.isEmpty) {
       setState(() => _error = "아이디와 비밀번호를 입력하세요.");
@@ -34,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       _loading = true;
-      _error   = null;
+      _error = null;
     });
 
     final result = await ApiService.login(email: email, password: pw);
@@ -44,7 +46,16 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     if (result["success"] == true) {
-      // 로그인 성공 → MainPage 로 교체 이동
+      // ✅ 1. userId와 token 추출 (API 응답에 따라 키 이름은 조정)
+      final userId = result["user"]["user_id"];       // 예: UUID
+      final token = result["access_token"];
+
+      // ✅ 2. SharedPreferences에 저장
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString("userId", userId);
+      await prefs.setString("token", token);
+
+      // ✅ 3. MainPage로 이동
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainPage()),
@@ -53,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _error = result["message"] as String);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

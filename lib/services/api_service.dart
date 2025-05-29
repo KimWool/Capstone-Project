@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // 안드로이드 에뮬레이터: 10.0.2.2, iOS 시뮬레이터: localhost
-  static const String _baseUrl = "http://10.0.2.2:8000";
+  static const String _baseUrl = "http://113.198.66.75:10010";
+
 
   /// 이메일 회원가입
   static Future<Map<String, dynamic>> signUpEmail({

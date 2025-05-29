@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EditProfilePage extends StatelessWidget {
   const EditProfilePage({super.key});
@@ -9,6 +11,11 @@ class EditProfilePage extends StatelessWidget {
     final TextEditingController confirmPasswordController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
     final TextEditingController phoneController = TextEditingController();
+
+    // TODO: 실제 로그인된 사용자 정보로 교체
+    final String baseUrl = 'http://localhost:8000'; // 또는 클라우드 주소
+    final String userId = 'abc12345';
+    final String token = 'your_jwt_token_here'; // 필요 없다면 생략 가능
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -41,9 +48,9 @@ class EditProfilePage extends StatelessWidget {
                   color: const Color(0xFFF4F4F4),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'abc12345',
-                  style: TextStyle(color: Colors.grey),
+                child: Text(
+                  userId,
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ),
             ),
@@ -108,10 +115,51 @@ class EditProfilePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () {
-                  // TODO: 수정 완료 처리
-                  Navigator.pushNamed(context, '/my');
+                onPressed: () async {
+                  final password = passwordController.text;
+                  final confirmPassword = confirmPasswordController.text;
+                  final email = emailController.text;
+                  final phone = phoneController.text;
+
+                  if (password != confirmPassword) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final response = await http.put(
+                      Uri.parse('$baseUrl/users/$userId'), // ✅ 여기 변경
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer $token', // 필요시
+                      },
+                      body: jsonEncode({
+                        'password': password,
+                        'email': email,
+                        'phone': phone,
+                      }),
+                    );
+
+                    if (response.statusCode == 200) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('정보가 성공적으로 수정되었습니다.')),
+                      );
+                      Navigator.pushNamed(context, '/my');
+                    } else {
+                      final msg = jsonDecode(response.body)['detail'];
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('오류: $msg')),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('에러 발생: $e')),
+                    );
+                  }
                 },
+
                 child: const Text(
                   '수정완료',
                   style: TextStyle(

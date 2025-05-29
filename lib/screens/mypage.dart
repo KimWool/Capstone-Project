@@ -1,16 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'edit_profile.dart';
 
-class MyPage extends StatelessWidget {
+class MyPage extends StatefulWidget {
   const MyPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const String userName = "김OO";
-    const String phoneNumber = "010 - 1234 - 5678";
-    const String email = "abc123@naver.com";
+  State<MyPage> createState() => _MyPageState();
+}
 
+class _MyPageState extends State<MyPage> {
+  String userName = '';
+  String phoneNumber = '';
+  String email = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserInfo();
+  }
+
+  Future<void> fetchUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString("userId") ?? "";
+    final token = prefs.getString("token") ?? "";
+
+    final response = await http.get(
+      Uri.parse('http://localhost:8000/users/$userId'), // 실제 서버 주소로 바꾸세요
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        userName = data["username"] ?? "";
+        phoneNumber = data["phone"] ?? "";
+        email = data["email"] ?? "";
+      });
+    } else {
+      print("❌ 사용자 정보를 불러오지 못했습니다: ${response.statusCode}");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
