@@ -33,10 +33,11 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
 
     print('입력한 동네: $location');
     print('입력한 전세 금액: $price');
+    print('선택된 건물 유형: $selectedPropertyType');
 
     try {
       final analysis_response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/transaction/summary'),
+        Uri.parse('http://113.198.66.75:10010/transaction/summary'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'address': location,
@@ -50,7 +51,7 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
         print('실거래가 분석 결과: $result');
 
       final rentRateResponse = await http.post(
-        Uri.parse('http://127.0.0.1:8000/rent-rate'),
+        Uri.parse('http://113.198.66.75:10010/rent-rate'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'address': location,
@@ -77,7 +78,7 @@ class _RealTransactionAnalysisPageState extends State<RealTransactionAnalysisPag
           arguments: {
             'result': result,
             'entered_price': price,
-            'house_type': selectedPropertyType,
+            'selectedPropertyType': selectedPropertyType,
             'jeonseRates': jeonseRates,
           },
         );

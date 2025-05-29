@@ -150,7 +150,7 @@ async def fetch_exact_jeonse_records(address: str, house_type: str):
   return matched_records
 
 # 정확한 주소가 아닌 동네 단위 전세 실거래가 추출
-async def get_latest_price_by_region(address: str, house_type: str, trade_type: str, min_records: int = 50, max_months: int =12):
+async def get_latest_price_by_region(address: str, house_type: str, trade_type: str, min_records: int = 100, max_months: int =12):
   if trade_type == "전세":
     fetch_fn = fetch_jeonse_price_data
   elif trade_type == "매매":
@@ -541,7 +541,7 @@ def parse_real_estate_xml(xml_str: str, house_type: str, transaction_type: str):
 # __main__에서 실행
 if __name__ == "__main__":
   address = "서울특별시 송파구 잠실동"
-  house_type = "아파트"
+  house_type = "연립다세대"
   summary = asyncio.run(summarize_transaction_by_address(address, house_type))
 
   print("\n📊 전세 거래 요약 정보:")

@@ -58,8 +58,6 @@ def calculate_risk_score(findings: dict) -> dict:
     # 1. 소유권 관련 위험
     if findings.get("건축물대장_소유자") != findings.get("등기부_소유자"):
         score = apply_risk(score, reasons, severities, "소유자불일치", 1.0, "소유자 불일치")
-    elif findings.get("등기부_소유자") != findings.get("계약_임대인"):
-        score = apply_risk(score, reasons, severities, "소유자불일치", 0.8, "임대인과 소유자 다름")
     if any(findings.get(k) == "있음" for k in ["경매개시결정", "압류", "가압류", "가등기", "신탁"]):
         score = apply_risk(score, reasons, severities, "소유권침해요소", 1.0, "소유권 침해 요소 있음")
 
