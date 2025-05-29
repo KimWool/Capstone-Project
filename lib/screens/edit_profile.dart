@@ -1,22 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:capstone_project/services/api_service.dart'; //
 
-class EditProfilePage extends StatelessWidget {
+
+class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
   @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends State<EditProfilePage> {
+  late TextEditingController passwordController;
+  late TextEditingController confirmPasswordController;
+  late TextEditingController emailController;
+  late TextEditingController phoneController;
+
+  String userId = '';
+  String token = '';
+
+  @override
+  void initState() {
+    super.initState();
+    passwordController = TextEditingController();
+    confirmPasswordController = TextEditingController();
+    emailController = TextEditingController();
+    phoneController = TextEditingController();
+    loadUserInfo();
+  }
+
+  Future<void> loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedEmail = prefs.getString('email') ?? '';
+    final token = prefs.getString('token') ?? '';
+
+    if (storedEmail.isEmpty || token.isEmpty) {
+      print('❌ 저장된 이메일 또는 토큰이 없습니다.');
+      return;
+    }
+
+    final result = await ApiService.getUserByEmail(storedEmail, token);
+
+    if (result['success'] == true) {
+      final data = result['data'];
+      setState(() {
+        userId = data['user_id'] ?? '';
+        emailController.text = data['email'] ?? '';
+        phoneController.text = data['phone'] ?? '';
+      });
+    } else {
+      print('❌ 사용자 정보 로딩 실패: ${result['message']}');
+    }
+  }
+
+
+  @override
   Widget build(BuildContext context) {
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController confirmPasswordController = TextEditingController();
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController phoneController = TextEditingController();
-
-    // TODO: 실제 로그인된 사용자 정보로 교체
-    final String baseUrl = 'http://localhost:8000'; // 또는 클라우드 주소
-    final String userId = 'abc12345';
-    final String token = 'your_jwt_token_here'; // 필요 없다면 생략 가능
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -130,10 +171,10 @@ class EditProfilePage extends StatelessWidget {
 
                   try {
                     final response = await http.put(
-                      Uri.parse('$baseUrl/users/$userId'), // ✅ 여기 변경
+                      Uri.parse('http://10.0.2.2:8000/users/$userId'),
                       headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer $token', // 필요시
+                        'Authorization': 'Bearer $token',
                       },
                       body: jsonEncode({
                         'password': password,
@@ -159,7 +200,6 @@ class EditProfilePage extends StatelessWidget {
                     );
                   }
                 },
-
                 child: const Text(
                   '수정완료',
                   style: TextStyle(
@@ -241,5 +281,14 @@ class EditProfilePage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 }

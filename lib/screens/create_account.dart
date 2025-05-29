@@ -31,16 +31,14 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     final pw        = pwController.text;
     final pwConfirm = pwConfirmController.text;
     final email     = emailController.text.trim();
-    final phone     = phoneController.text.trim();
+    final phone     = phoneController.text.trim();  // ✅ 추가
 
-    // 1) 비밀번호 확인
     if (pw != pwConfirm) {
       setState(() => _error = "비밀번호가 일치하지 않습니다.");
       return;
     }
-    // 2) 필수 항목 체크
-    if (id.isEmpty || pw.isEmpty || email.isEmpty) {
-      setState(() => _error = "아이디, 비밀번호, 이메일은 필수 입력입니다.");
+    if (id.isEmpty || pw.isEmpty || email.isEmpty || phone.isEmpty) {
+      setState(() => _error = "아이디, 비밀번호, 이메일, 전화번호는 필수 입력입니다.");
       return;
     }
 
@@ -49,12 +47,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       _error   = null;
     });
 
-    // 3) ApiService 호출
     try {
       final result = await ApiService.signUpEmail(
         email:    email,
         username: id,
         password: pw,
+        phone:    phone, // ✅ 추가
       );
 
       if (result["success"] == true) {
@@ -70,6 +68,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       setState(() => _loading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:capstone_project/services/api_service.dart'; //
 
 import 'edit_profile.dart';
 
@@ -13,6 +14,7 @@ class MyPage extends StatefulWidget {
 }
 
 class _MyPageState extends State<MyPage> {
+  String userId = '';     // 🔹 추가됨
   String userName = '';
   String phoneNumber = '';
   String email = '';
@@ -25,25 +27,28 @@ class _MyPageState extends State<MyPage> {
 
   Future<void> fetchUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString("userId") ?? "";
+    final storedEmail = prefs.getString("email") ?? "";
     final token = prefs.getString("token") ?? "";
 
-    final response = await http.get(
-      Uri.parse('http://localhost:8000/users/$userId'), // 실제 서버 주소로 바꾸세요
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    if (storedEmail.isEmpty || token.isEmpty) {
+      print("❌ 저장된 이메일 또는 토큰이 없습니다.");
+      return;
+    }
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    final result = await ApiService.getUserByEmail(storedEmail, token);
+    if (result["success"] == true) {
+      final data = result["data"];
       setState(() {
+        userId = data["user_id"] ?? "";
         userName = data["username"] ?? "";
         phoneNumber = data["phone"] ?? "";
         email = data["email"] ?? "";
       });
     } else {
-      print("❌ 사용자 정보를 불러오지 못했습니다: ${response.statusCode}");
+      print("❌ 사용자 정보 로드 실패: ${result["message"]}");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +89,7 @@ class _MyPageState extends State<MyPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$userName님',
+                      '$userName님',  // ✅ userId로 표시
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
