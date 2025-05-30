@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from app.services.sllm_model import extract_fields, compare_flags_gpt4, generate_explanations, compile_report
 from app.services.risk_score import calculate_risk_score
+from app.services.transaction_data_parser import fetch_exact_jeonse_records
 from app.services.vector_db import store_full_analysis
 
 
@@ -13,6 +14,28 @@ def load_data():
         building_list = json.load(f)
     return registry_list, building_list
 
+def load_transaction_data():
+    try:
+        with open("latest_transaction_data.json", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"transaction_data 로드 실패: {e}")
+        return {"시세": 0, "보증금": 0}
+
+def analyze_by_address(address: str, deposit: int) -> dict:
+    try:
+        real_price = fetch_exact_jeonse_records(address)
+        deposit = int(deposit)
+        if not real_price and deposit:
+            return {"시세": 0, "보증금": 0}
+        transaction_data = {
+            "시세": real_price,
+            "보증금": deposit
+        }
+        return transaction_data
+    except Exception as e:
+        print(f"[analyze_by_address] 오류 발생: {e}")
+        return {"시세": 0, "보증금": 0}
 
 def main():
     registry_data, building_data = load_data()
@@ -85,15 +108,16 @@ def main():
         #report = compile_report(case_id, address, flags, explanations)
         #print("\n=== 최종 보고서 ===\n", report)
 
+        data = load_transaction_data()
         # 7) 메타데이터 & 위험도 분석
         meta = {
             "등기부_소유자": reg_fields.get("소유자명"),
             "건축물대장_소유자": bld_fields.get("소유자명"),
             "채권최고액": reg.get("채권최고액"),
             "위험_권리_목록": reg_fields.get("위험 권리 목록", []),
-            "건물 용도": reg_fields.get("건물 용도")
+            "건물 용도": reg_fields.get("건물 용도"),
         }
-        score = calculate_risk_score(meta)
+        score = calculate_risk_score(meta, data)
         print("\n위험도 분석 결과")
         print("=" * 40)
         print(f"위험 점수 총합: {score['score']}점")

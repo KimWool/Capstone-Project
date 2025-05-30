@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:capstone_project/screens/address_search.dart';
+import 'package:http/http.dart' as http;
 
 class RiskAnalysisPage extends StatefulWidget {
   const RiskAnalysisPage({super.key});
@@ -29,11 +30,33 @@ class _RiskAnalysisPageState extends State<RiskAnalysisPage> {
     super.dispose();
   }
 
+  Future<void> sendAddressAndPrice(String fullAddress, int price) async {
+    final url = Uri.parse('http://113.198.66.75:10010/risk/address'); // Python 서버 주소
+
+    try {
+      await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'full_address': fullAddress,
+          'price': price,
+        }),
+      );
+      print('주소와 가격 전송 완료: $fullAddress / $price');
+    } catch (e) {
+      print('주소와 가격 전송 실패: $e');
+    }
+  }
+
+
   void _onAnalyzePressed() {
     final fullAddress = '${addressController.text} ${detailAddressController.text}';
     final bcode = selectedAddressData?['bcode'] ?? '없음';
     final mainNo = selectedAddressData?['mainAddressNo'] ?? '없음';
     final subNo = selectedAddressData?['subAddressNo'] ?? '없음';
+    final price = int.tryParse(priceController.text.replaceAll(',', '')) ?? 0;
+
+    sendAddressAndPrice(fullAddress, price);
 
     showDialog(
       context: context,

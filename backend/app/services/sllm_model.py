@@ -35,7 +35,7 @@ tokenizer = AutoTokenizer.from_pretrained(
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     token=hf_token,
-    cache_dir="/mnt/model_cache"
+    cache_dir="E:/huggingface_cache"
 )
 
 pipe = pipeline(

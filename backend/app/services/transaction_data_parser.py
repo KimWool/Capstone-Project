@@ -51,7 +51,7 @@ def resolve_region_code_from_address(address: str) -> str:
   raise ValueError("주소에서 시군구 코드를 찾을 수 없습니다.")
 
 # 주소를 입력받아 가장 최근 전세 실거래가 반환
-async def fetch_exact_jeonse_records(address: str, house_type: str):
+async def fetch_exact_jeonse_records(address: str, house_type: str = "아파트"):
   region_code = resolve_region_code_from_address(address)
   current_ym = datetime.today()
 
@@ -99,8 +99,6 @@ async def fetch_exact_jeonse_records(address: str, house_type: str):
     raise ValueError("지원하지 않는 주택 유형입니다.")
 
   MAX_RETRIES = 12
-  REQUIRED_RECORDS = 5
-  matched_records = []
 
   for i in range(MAX_RETRIES):
     deal_ym = current_ym.strftime("%Y%m")
@@ -131,23 +129,17 @@ async def fetch_exact_jeonse_records(address: str, house_type: str):
     all_records = []
     for records in parsed.values():
       all_records.extend(records)
+
     # 건물명이 일치하는 레코드만 필터링
     jibun_matched = [r for r in all_records if r.get("jibun", "") == jibun]
     if jibun_matched:
-      #print(f"✅ {deal_ym}: 지번 일치 {len(jibun_matched)}건")
-      matched_records.extend(jibun_matched)
-      matched_records = sorted(matched_records, key=lambda x: x["deal_date"], reverse=True)
-      if len(matched_records) >= REQUIRED_RECORDS:
-        matched_records = matched_records[:REQUIRED_RECORDS]
-        break
-
+      # 가장 최근 거래 한 건만 추출
+      latest_record = sorted(jibun_matched, key=lambda x: x["deal_date"], reverse=True)[0]
+      return latest_record.get("deposit")
     current_ym -= relativedelta(months=1)
 
-  if not matched_records:
-    print("❌ 해당 주소의 실거래 데이터(지번 일치 기준)가 없습니다.")
-    return []
-
-  return matched_records
+  print("❌ 해당 주소의 실거래 데이터(지번 일치 기준)가 없습니다.")
+  return None
 
 # 정확한 주소가 아닌 동네 단위 전세 실거래가 추출
 async def get_latest_price_by_region(address: str, house_type: str, trade_type: str, min_records: int = 100, max_months: int =12):
@@ -540,44 +532,8 @@ def parse_real_estate_xml(xml_str: str, house_type: str, transaction_type: str):
 
 # __main__에서 실행
 if __name__ == "__main__":
-  address = "서울특별시 송파구 잠실동"
-  house_type = "연립다세대"
-  summary = asyncio.run(summarize_transaction_by_address(address, house_type))
+  address = "서울특별시 영등포구 여의나루로 121"
+  house_type = "아파트"  # 필요 시 변경 가능
 
-  print("\n📊 전세 거래 요약 정보:")
-  if summary["status"] == "ok":
-    print(f"📍 지역: {summary['region']}")
-    print(f"🏠 주택 유형: {summary['house_type']}")
-    print(f"📅 거래 기간: {summary['period']}")
-    print(f"💰 평균 보증금(㎡당): {summary['average_deposit_per_m2']}만원")
-    print(f"🔻 최저 보증금(㎡당): {summary['min_deposit_per_m2']}만원")
-    print(f"    └ 지번: {summary['min_record']['jibun']}, 건물명: {summary['min_record']['name']}, 날짜: {summary['min_record']['deal_date']}")
-    print(f"🔺 최고 보증금(㎡당): {summary['max_deposit_per_m2']}만원")
-    print(f"    └ 지번: {summary['max_record']['jibun']}, 건물명: {summary['max_record']['name']}, 날짜: {summary['max_record']['deal_date']}")
-    print(f" 가장 많이 거래된 건물: {summary['most_traded_name']} ({summary['most_traded_name_count']}건)")
-    print(f" 가장 많이 거래된 면적대: {summary['most_traded_area']}㎡ ({summary['most_traded_area_count']}건)")
-    print(f"🛡️ 데이터 신뢰도: {summary.get('reliability', '정보 없음')}")
-    print(f"🧾 최근 보증금 샘플: {summary['recent_deposit_samples']}")
-
-    print(f"\n💼 매매 거래 요약:")
-    print(f"📅 거래 기간: {summary['sale_period']}")
-    print(f"💵 평균 매매가(㎡당): {summary.get('average_sale_per_m2', '정보 없음')}만원")
-
-    if summary.get("jeonse_ratio") is not None:
-      print(f"\n📈 전세가율: {summary['jeonse_ratio']}%")
-      print(f"⚠️ 전세 위험도: {summary['risk_level']}")
-      if summary.get("filtered_jeonse_ratio"):
-        print(f"📉 이상치 제거 후 전세가율: {summary['filtered_jeonse_ratio']}%")
-    else:
-      print("⚠️ 전세가율 계산을 위한 매매 데이터가 부족합니다.")
-
-    print(f"\n📊 면적대별 전세가율:")
-    ratios = summary.get("ratios_by_area_group_detailed", {})
-    if ratios:
-      for area, data in ratios.items():
-        print(f"  - {area}㎡: 평균 {data['average_ratio']}%, 거래 {data['count']}건")
-    else:
-      print("  - 면적대별 전세가율 정보를 계산할 수 없습니다.")
-
-  else:
-    print("❗ 데이터 없음:", summary["message"])
+  record = asyncio.run(fetch_exact_jeonse_records(address, house_type))
+  print(record)

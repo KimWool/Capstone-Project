@@ -1,4 +1,5 @@
 # app/services/risk_score.py
+from app.services.transaction_data_parser import fetch_exact_jeonse_records
 
 risk_factor = {
     # 세부항목 기준 가중치 (AHP 분석 기반 최종 가중치)
@@ -49,7 +50,7 @@ def classify_risk_by_severity(score, severities):
         else:
             return "안전"
 
-def calculate_risk_score(findings: dict) -> dict:
+def calculate_risk_score(findings: dict,  transaction_data: dict = None) -> dict:
     score = 0
     reasons = []
     severities = []
@@ -58,21 +59,21 @@ def calculate_risk_score(findings: dict) -> dict:
     # 1. 소유권 관련 위험
     if findings.get("건축물대장_소유자") != findings.get("등기부_소유자"):
         score = apply_risk(score, reasons, severities, "소유자불일치", 1.0, "소유자 불일치")
-    if any(findings.get(k) == "있음" for k in ["경매개시결정", "압류", "가압류", "가등기", "신탁"]):
+    if any(r in findings.get("위험_권리_목록", []) for r in ["경매개시결정", "압류", "가압류", "가등기", "신탁"]):
         score = apply_risk(score, reasons, severities, "소유권침해요소", 1.0, "소유권 침해 요소 있음")
 
     # 2. 기존 전세권 및 임차권 위험(복합적인 요인, 실제 위험 낮음)
-    if findings.get("임차권"):
+    if "임차권" in findings.get("위험_권리_목록", []):
         score = apply_risk(score, reasons, severities, "임차권등기명령", 1.0, "임차권 등기명령 존재")
     owner_name = findings.get("등기부_소유자", "").strip()
     if check_defaulter(owner_name):
         score = apply_risk(score, reasons, severities, "전세권설정", 1.0, "상습 채무불이행자 공개 내역에 포함됨")
-    elif findings.get("전세권"):
+    elif "전세권" in findings.get("위험_권리_목록", []):
         score = apply_risk(score, reasons, severities, "전세권설정", 0.6, "이전 전세권 설정")
 
     # 3. 근저당권 설정 위험 (단일 항목이면서 실질 위험도 높음)
+    price = transaction_data.get("시세", 0)
     pledge = int(findings.get("채권최고액", 0) or 0)
-    price = int(findings.get("주택_시세", 1) or 1) #실제 사용자에게 주소를
     pledge_ratio = safe_divide(pledge, price) * 100
 
     if pledge_ratio >= 60:
@@ -83,7 +84,7 @@ def calculate_risk_score(findings: dict) -> dict:
         score = apply_risk(score, reasons, severities, "근저당권", 0.3, "근저당 있음")
 
     # 4. 깡통주택 위험도 (단일 항목이면서 높지만 근저당보다 변동성이 큼)
-    deposit = int(findings.get("계약_보증금", 0) or 0)
+    deposit = transaction_data.get("보증금", 0)
     margin_ratio = safe_divide(pledge + deposit, price) * 100
 
     if margin_ratio >= 90:
