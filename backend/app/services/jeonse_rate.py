@@ -1,6 +1,5 @@
 import os
 import re
-import tempfile
 
 from selenium import webdriver
 from selenium.common import TimeoutException
@@ -9,6 +8,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 import time
 from datetime import datetime
 from threading import Lock
@@ -26,13 +27,12 @@ def parse_korean_address(address: str):
 def fetch_rent_rate(address: str):
   # Selenium WebDriver 설정
   options = webdriver.ChromeOptions()
-  temp_profile = tempfile.mkdtemp()
-  options.add_argument(f'--user-data-dir={temp_profile}')
   options.add_argument('--headless')  # 브라우저 창을 띄우지 않음
   options.add_argument('--no-sandbox')
   options.add_argument('--disable-dev-shm-usage')
 
   # 크롬 드라이버 실행
+  driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
   driver = webdriver.Chrome(options=options)
   driver.get("https://rtech.or.kr/board/rentRateView.do#")
 
