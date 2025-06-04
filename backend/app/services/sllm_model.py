@@ -4,8 +4,6 @@ import re
 import json
 from pathlib import Path
 from dotenv import load_dotenv
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain_huggingface import HuggingFacePipeline
 from openai import OpenAI
 from typing import Dict
 
@@ -20,43 +18,13 @@ load_dotenv(env_path)
 if str(BASE_DIR) not in sys.path:
     sys.path.append(str(BASE_DIR))
 
-# ── 2) KoAlpaca sLLM 설정
-hf_token = os.getenv("HF_TOKEN")
-if not hf_token:
-    raise ValueError("HF_TOKEN이 로드되지 않았습니다")
-model_name = "beomi/KoAlpaca-llama-1-7b"
-tokenizer = AutoTokenizer.from_pretrained(
-    model_name,
-    token=hf_token,
-    use_fast=False,
-    cache_dir="/mnt/model_cache"
-)
-
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    token=hf_token,
-    cache_dir="/mnt/model_cache"
-)
-
-pipe = pipeline(
-    "text-generation",
-    model=model,
-    tokenizer=tokenizer,
-    max_new_tokens=128,
-    temperature=0.7,
-    do_sample=True,
-    repetition_penalty=1.1,
-    device=-1
-)
-llm = HuggingFacePipeline(pipeline=pipe)
-
-# ── 3) OpenAI GPT-4 설정
+# ── 2) OpenAI GPT-4 설정
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다")
 openai_client = OpenAI(api_key=api_key)
 
-# ── 4) 필드 추출 정규표현식 패턴
+# ── 3) 필드 추출 정규표현식 패턴
 patterns = {
     "소유자명":        r"소유자[:：]?\s*([^,]+)",
     "건물 용도":      r"용도[:：]?\s*([^,]+)",
@@ -69,7 +37,7 @@ patterns = {
     "위험 권리 존재 여부": r"권리[:：]?\s*([^,]+)"
 }
 
-# ── 5) 텍스트에서 필드 값 추출
+# ── 4) 텍스트에서 필드 값 추출
 def extract_fields(text: str) -> dict:
     fields = {}
     risk_types = {"경매개시결정", "압류", "가압류", "가등기", "신탁", "전세권", "임차권"}
@@ -87,7 +55,7 @@ def extract_fields(text: str) -> dict:
             fields[name] = value
     return fields
 
-# ── 6) GPT-4로 플래그(일치/불일치) 판정
+# ── 5) GPT-4로 플래그(일치/불일치) 판정
 def compare_flags_gpt4(reg: dict, bld: dict) -> Dict[str, str]:
     prompt = f"""
 다음은 두 개의 문서에서 추출된 필드 값입니다.
@@ -120,7 +88,6 @@ def compare_flags_gpt4(reg: dict, bld: dict) -> Dict[str, str]:
     )
 
     content = resp.choices[0].message.content.strip()
-    
     if not content:
         raise ValueError("❌ GPT 응답이 비어 있습니다.")
 
@@ -130,26 +97,39 @@ def compare_flags_gpt4(reg: dict, bld: dict) -> Dict[str, str]:
         print("❌ GPT 응답이 JSON이 아님:", content)
         raise
 
-# ── 7) KoAlpaca로 설명 생성 (기존 코드 재사용)
+# ── 6) GPT-4로 설명 생성 (KoAlpaca → GPT-4로 대체)
 def generate_explanations(flags: Dict[str, str], reg: dict, bld: dict) -> Dict[str, str]:
     lines = []
     for k, flag in flags.items():
         rv = reg.get(k) or "없음"
         bv = bld.get(k) or "없음"
-        lines.append(f"{k}: flag={flag}, reg='{rv}', bld='{bv}'")
-    prompt = (
-        "아래는 비교 대상 항목의 판정 결과와 원본 값입니다.\n"
-        "각 항목마다 ‘동일함’ 또는 ‘왜 다른지’ 한 줄 설명만 생성하세요.\n\n" + "\n".join(lines)
-    )
-    raw = llm.invoke(prompt)
-    explanations = {}
-    for line in str(raw).splitlines():
-        if ':' in line:
-            key, desc = line.split(':', 1)
-            explanations[key.strip()] = desc.strip()
-    return explanations
+        lines.append(f"{k}: flag={flag}, 등기부='{rv}', 건축물대장='{bv}'")
 
-# ── 8) GPT-4로 최종 보고서 컴파일
+    prompt = (
+        "다음은 등기부등본과 건축물대장의 필드 비교 결과입니다.\n"
+        "각 항목마다 왜 동일하거나 다른지 짧게 설명해 주세요.\n"
+        "응답은 JSON 형식으로 아래와 같이 작성해 주세요:\n\n"
+        "{\n"
+        '  "소유자명": "설명",\n'
+        '  "건물 용도": "설명"\n'
+        "}\n\n"
+        + "\n".join(lines)
+    )
+
+    resp = openai_client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+
+    content = resp.choices[0].message.content.strip()
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        print("❌ GPT 응답이 JSON이 아님:", content)
+        raise
+
+# ── 7) GPT-4로 최종 보고서 컴파일
 def compile_report(case_id: str, address: str, flags: Dict[str, str], explanations: Dict[str, str]) -> str:
     table = "\n".join([
         "항목 | 일치 유무 | 설명",
@@ -161,14 +141,13 @@ def compile_report(case_id: str, address: str, flags: Dict[str, str], explanatio
 """
     resp = openai_client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role":"user","content":prompt}],
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
     return resp.choices[0].message.content
 
-# ── 9) 엔트리 포인트 예시
+# ── 8) 엔트리 포인트 예시
 if __name__ == '__main__':
-    # 예시 사용 흐름
     sample_reg = extract_fields("[등기부등본] 소유자: 김철수, 용도: 주거용")
     sample_bld = extract_fields("[건축물대장] 소유자: 고예지, 용도: 주거용")
     flags = compare_flags_gpt4(sample_reg, sample_bld)
