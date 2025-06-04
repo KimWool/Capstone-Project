@@ -1,22 +1,31 @@
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from pathlib import Path
+import os
+from dotenv import load_dotenv
 
-# ┌─ 1) 임베디드(in-process) 모드로 Chroma Client 초기화
+# ── 1) 환경 설정 (프로젝트 루트 .env 로드)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+env_path = BASE_DIR / ".env"
+if not env_path.is_file():
+    raise FileNotFoundError(f".env 파일이 없습니다: {env_path}")
+load_dotenv(env_path)
+
+# ── 2) OpenAI API 키 로딩 및 임베딩 함수 설정
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다")
+
+embedding_function = OpenAIEmbeddingFunction(api_key=api_key)
+
+# ── 3) Chroma Client 초기화 및 컬렉션 준비
 client = chromadb.Client()
-
-# ┌─ 2) 임베딩 함수 설정 
-# 인자명 없이 모델 이름만 전달 (중복 오류 방지)
-embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-    "jhgan/ko-sroberta-multitask"
-)
-
-# ┌─ 3) 컬렉션 생성 또는 가져오기
 collection = client.get_or_create_collection(
     name="property_docs",
     embedding_function=embedding_function
 )
 
-# ┌─ 4) Upsert 함수
+# ── 4) Upsert 함수
 def upsert_property_docs(docs: list[dict]):
     ids = [d["id"] for d in docs]
     texts = [d["text"] for d in docs]
@@ -27,7 +36,7 @@ def upsert_property_docs(docs: list[dict]):
         ids=ids
     )
 
-# ┌─ 5) Query 함수
+# ── 5) Query 함수
 def query_similar_documents(query: str, n_results: int = 5) -> list[dict]:
     results = collection.query(
         query_texts=[query],
@@ -41,7 +50,7 @@ def query_similar_documents(query: str, n_results: int = 5) -> list[dict]:
         for iid, meta, dist in zip(ids, metadatas, distances)
     ]
 
-# ┌─ 6) 분석 결과 저장용 함수
+# ── 6) 분석 결과 저장 함수
 def store_full_analysis(case_id: str, summary: str, score: dict, address: str):
     collection.upsert(
         documents=[summary],
@@ -54,7 +63,7 @@ def store_full_analysis(case_id: str, summary: str, score: dict, address: str):
         ids=[f"analyzed-{case_id}"]
     )
 
-# ┌─ 7) 텍스트 포맷 정리 함수
+# ── 7) 등기부 + 건축물대장 메타데이터 정리
 def build_vector_docs(registry_list, building_list):
     docs = []
     for reg, bld in zip(registry_list, building_list):
