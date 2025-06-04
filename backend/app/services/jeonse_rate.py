@@ -32,8 +32,7 @@ def fetch_rent_rate(address: str):
   options.add_argument('--disable-dev-shm-usage')
 
   # 크롬 드라이버 실행
-  driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-  driver = webdriver.Chrome(options=options)
+  driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
   driver.get("https://rtech.or.kr/board/rentRateView.do#")
 
   try:
