@@ -24,6 +24,44 @@ def parse_korean_address(address: str):
   dong = parts[2] if len(parts) > 2 else '전체'
   return sido, sigungu, dong
 
+
+def find_available_search_month(wait, max_lookback=6):
+  """
+  현재 월부터 max_lookback 개월 전까지 순차적으로 시도하며
+  전세가율 데이터가 있는 월을 찾는 함수.
+  """
+  now = datetime.now()
+  for i in range(max_lookback):
+    # 월을 하나씩 감소시키되, 1월 이전이면 전년도 12월 등으로 이동
+    search_month = now.month - i - 1
+    if search_month <= 0:
+      year = now.year - 1
+      month = 12 + search_month
+    else:
+      year = now.year
+      month = search_month
+
+    year_text = f"{year}년"
+    month_text = f"{month}월"
+
+    print(f"[시도 중] {year_text} {month_text} 데이터 검색 시도")
+
+    try:
+      # 셀렉트박스 선택 시도
+      search_period_year = Select(wait.until(EC.presence_of_element_located((By.ID, "yearFrom"))))
+      search_period_year.select_by_visible_text(year_text)
+
+      search_period_month = Select(wait.until(EC.presence_of_element_located((By.ID, "monthFrom"))))
+      search_period_month.select_by_visible_text(month_text)
+
+      return year_text, month_text
+    except Exception as e:
+      print(f"해당 날짜 선택 실패: {year_text} {month_text} → {str(e)}")
+      continue
+
+  raise ValueError(f"{max_lookback}개월 전까지 데이터가 존재하지 않습니다.")
+
+
 def fetch_rent_rate(address: str):
   # Selenium WebDriver 설정
   options = webdriver.ChromeOptions()
@@ -83,6 +121,7 @@ def fetch_rent_rate(address: str):
 
     # 현재 년월 가져 오기
     now = datetime.now()
+    current_year, current_month = find_available_search_month(wait)
     if now.month == 1:
       current_year = f"{now.year -1}년"
       current_month = "12월"
@@ -123,11 +162,13 @@ def fetch_rent_rate(address: str):
       }
       return result
     else:
+      print("[디버그] 마지막 행 텍스트:", last_row_text)
+      print("[디버그] 추출된 값:", raw_values)
       print("[오류] 전세가율 값이 4개가 아닙니다:", raw_values)
       return None
   except Exception as e:
     print(f"오류 발생: {e}")
-    return []
+    return None
 
   finally:
     driver.quit()
