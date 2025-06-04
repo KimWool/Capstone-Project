@@ -122,18 +122,6 @@ def fetch_rent_rate(address: str):
     # 현재 년월 가져 오기
     now = datetime.now()
     current_year, current_month = find_available_search_month(wait)
-    if now.month == 1:
-      current_year = f"{now.year -1}년"
-      current_month = "12월"
-    else:
-      current_year = f"{now.year}년"
-      current_month = f"{now.month - 1}월"
-
-    # 검색 기간 선택: 현재 날짜(년월)
-    search_period_year = Select(wait.until(EC.presence_of_element_located((By.ID, "yearFrom"))))
-    search_period_year.select_by_visible_text(current_year)
-    search_period_month = Select(wait.until(EC.presence_of_element_located((By.ID, "monthFrom"))))
-    search_period_month.select_by_visible_text(current_month)
 
     # 검색 버튼 클릭
     search_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="rateSearchtbl"]/tbody/tr[1]/td[7]/button[2]')))
@@ -175,8 +163,6 @@ def fetch_rent_rate(address: str):
 
 # 전세가율 기반 위험도 판단 함수
 def assess_risk_by_jeonse_rate(rate: float) -> str:
-  if rate is None:
-    risk_result = "데이터 없음"
   try:
     rate_float = float(rate)
   except (ValueError, TypeError):
