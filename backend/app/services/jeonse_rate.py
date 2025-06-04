@@ -1,4 +1,6 @@
+import os
 import re
+import tempfile
 
 from selenium import webdriver
 from selenium.common import TimeoutException
@@ -24,6 +26,8 @@ def parse_korean_address(address: str):
 def fetch_rent_rate(address: str):
   # Selenium WebDriver 설정
   options = webdriver.ChromeOptions()
+  temp_profile = tempfile.mkdtemp()
+  options.add_argument(f'--user-data-dir={temp_profile}')
   options.add_argument('--headless')  # 브라우저 창을 띄우지 않음
   options.add_argument('--no-sandbox')
   options.add_argument('--disable-dev-shm-usage')
@@ -80,8 +84,12 @@ def fetch_rent_rate(address: str):
 
     # 현재 년월 가져 오기
     now = datetime.now()
-    current_year = f"{now.year}년"
-    current_month = f"{now.month - 1}월"
+    if now.month == 1:
+      current_year = f"{now.year -1}년"
+      current_month = "12월"
+    else:
+      current_year = f"{now.year}년"
+      current_month = f"{now.month - 1}월"
 
     # 검색 기간 선택: 현재 날짜(년월)
     search_period_year = Select(wait.until(EC.presence_of_element_located((By.ID, "yearFrom"))))
