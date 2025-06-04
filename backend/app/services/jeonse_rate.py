@@ -112,12 +112,11 @@ def fetch_rent_rate(address: str):
 
     except TimeoutException:
       print(f"[경고] '{dong}' 동을 찾을 수 없어 '전체'로 대체합니다.")
-      if dong_select_element:
-        dong_select = Select(dong_select_element)
+      try:
+        dong_select = Select(wait.until(EC.presence_of_element_located((By.ID, "dong_code"))))
         dong_select.select_by_visible_text("전체")
-      else:
-        print("[오류] dong_select_element를 찾을 수 없습니다.")
-        return None
+      except Exception as inner_e:
+        print("[경고] 동 셀렉트박스가 로딩되지 않았습니다. 시군구 기준으로 검색을 진행합니다.")
 
     # 현재 년월 가져 오기
     now = datetime.now()
