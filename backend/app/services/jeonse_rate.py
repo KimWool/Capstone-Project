@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import time
 from datetime import datetime
+from threading import Lock
 
 def parse_korean_address(address: str):
   """
@@ -53,6 +54,7 @@ def fetch_rent_rate(address: str):
     sigungu_select = Select(wait.until(EC.presence_of_element_located((By.ID, "city_code"))))
     sigungu_select.select_by_visible_text(sigungu)
 
+    dong_select_element = None
     # 동 리스트 로딩 대기 및 선택 (최대 5초 대기)
     try:
       # 동 셀렉트박스 로딩 대기
@@ -69,8 +71,12 @@ def fetch_rent_rate(address: str):
 
     except TimeoutException:
       print(f"[경고] '{dong}' 동을 찾을 수 없어 '전체'로 대체합니다.")
-      dong_select = Select(dong_select_element)
-      dong_select.select_by_visible_text("전체")
+      if dong_select_element:
+        dong_select = Select(dong_select_element)
+        dong_select.select_by_visible_text("전체")
+      else:
+        print("[오류] dong_select_element를 찾을 수 없습니다.")
+        return None
 
     # 현재 년월 가져 오기
     now = datetime.now()
@@ -135,8 +141,11 @@ def assess_risk_by_jeonse_rate(rate: float) -> str:
     risk_result = "안전"
   return risk_result
 
+driver_lock = Lock()
+
 def fetch_rent_rate_with_risk(address: str):
-  rent_rates = fetch_rent_rate(address)
+  with driver_lock:
+    rent_rates = fetch_rent_rate(address)
   if not rent_rates:
     return None
 
